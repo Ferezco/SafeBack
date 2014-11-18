@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">SafeBack</string>
+    <string name="title_section1">Home</string>
+    <string name="title_section2">Back Injury Prevention</string>
+    <string name="title_section3">SafeBack</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="action_settings">Settings</string>
+    <string name="info_list_title">Prevent Back Injury</string>
+    <string name="share">Share</string>
+    <string name="learn_more">Learn More</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+    <string-array name="joint_control_panel_entries">
+        <item>Trunk</item>
+        <item>Shoulder</item>
+        <item>Hip</item>
+        <item>Neck</item>
+        <item>Elbow</item>
+        <item>Knee</item>
+    </string-array>
+
+    <string name="title_activity_single_image">SingleImageActivity</string>
+    <string name="titile_article_activity">ArticleActivity</string>
+
+</resources>

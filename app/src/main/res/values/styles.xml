@@ -1,0 +1,19 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="android:Theme.Material.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="android:actionBarStyle">@style/MyActionBar</item>
+    </style>
+
+    <!--ActionBar Style -->
+    <style name="MyActionBar"
+        parent="android:Widget.Material.Light.ActionBar">
+        <item name="android:background">#036bac</item>
+    </style>
+    <style name="ImageActionBar"
+        parent="android:Widget.Material.Light.ActionBar">
+        <item name="android:windowActionBarOverlay">true</item>
+        </style>
+
+</resources>
