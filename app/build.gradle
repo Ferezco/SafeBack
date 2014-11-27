@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.tri.felipe.safeback"
-        minSdkVersion 21
+        minSdkVersion 14
         targetSdkVersion 21
         versionCode 1
         versionName "1.0"
@@ -20,10 +20,10 @@ android {
 }
 
 dependencies {
-    compile 'com.android.support:support-v4:21.0.0'
+    compile 'com.android.support:support-v4:21.0.0+'
     compile 'com.android.support:recyclerview-v7:21.0.+'
     compile 'com.android.support:cardview-v7:21.0.+'
-
+    compile files('libs/jpct_ae-1.23-beta.jar')
 }
 repositories {
     flatDir{

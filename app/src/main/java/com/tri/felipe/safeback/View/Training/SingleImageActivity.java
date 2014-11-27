@@ -39,6 +39,7 @@ public class SingleImageActivity extends Activity implements OnTouchListener {
         mImageView = (ImageView) findViewById(R.id.fullscreen_image);
         mImageView.setImageResource(R.drawable.header_imgs);
         mImageView.setOnTouchListener(this);
+        getActionBar().hide();
     }
 
     @Override

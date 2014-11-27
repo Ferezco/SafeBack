@@ -1,5 +1,6 @@
 package com.tri.felipe.safeback.View.Article;
 
+import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -22,6 +23,7 @@ import com.tri.felipe.safeback.Controller.ArticleController;
 import com.tri.felipe.safeback.Controller.JSONParser;
 import com.tri.felipe.safeback.Model.Article;
 import com.tri.felipe.safeback.R;
+import com.tri.felipe.safeback.View.NavigationActivity;
 
 import org.apache.http.NameValuePair;
 import org.json.JSONArray;
@@ -45,7 +47,7 @@ public class ArticleFragment extends Fragment{
     ProgressDialog pDialog;
 
     // JSON
-    private static final String TAG_TRAINING = "fields";
+    private static final String TAG_ARTICLE = "fields";
     private static final String TAG_TITLE = "title";
     private static final String TAG_DATE = "date";
     private static final String TAG_DESCRIPTION = "description";
@@ -79,6 +81,12 @@ public class ArticleFragment extends Fragment{
         return rootView;
     }
 
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        ((NavigationActivity) activity).onSectionAttached(1);
+    }
+
 
     private class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ArticleViewHolder> {
 
@@ -92,8 +100,12 @@ public class ArticleFragment extends Fragment{
         public void onBindViewHolder(ArticleViewHolder articleViewHolder, int i) {
             final Article article = articleList.get(i);
             articleViewHolder.mTitle.setText(article.getTitle());
-            articleViewHolder.mTitle.setBackgroundResource(R.drawable.header_img);
-            articleViewHolder.mBody.setText(article.getDescription().substring(0,150) + "...");
+            if (i %2 == 0) {
+                articleViewHolder.mImage.setBackgroundResource(R.drawable.header_img3);
+            }else {
+                articleViewHolder.mImage.setBackgroundResource(R.drawable.header_img2);
+            }
+            articleViewHolder.mBody.setText(article.getDescription().substring(0,175) + "...");
             if (!article.getUrl().equals("N/A")){
                 articleViewHolder.mShare.setOnClickListener(new OnClickListener() {
                     @Override
@@ -131,6 +143,7 @@ public class ArticleFragment extends Fragment{
         }
 
         public class ArticleViewHolder extends RecyclerView.ViewHolder{
+            protected FrameLayout mImage;
             protected TextView mTitle;
             protected TextView mBody;
             protected TextView mShare;
@@ -138,6 +151,7 @@ public class ArticleFragment extends Fragment{
 
             public ArticleViewHolder(View itemView) {
                 super(itemView);
+                mImage  = (FrameLayout) itemView.findViewById(R.id.card_header_image);
                 mTitle = (TextView) itemView.findViewById(R.id.article_title);
                 mBody = (TextView) itemView.findViewById(R.id.article_text_preview);
                 mShare = (TextView) itemView.findViewById(R.id.article_share_button);
@@ -169,9 +183,8 @@ public class ArticleFragment extends Fragment{
             SimpleDateFormat df = new SimpleDateFormat("yyyy-mm-dd");
             try{
                 for (int i = 0; i < json.length(); i++){
-                    mArticle = json.getJSONObject(i).getJSONObject(TAG_TRAINING);
+                    mArticle = json.getJSONObject(i).getJSONObject(TAG_ARTICLE);
                     Log.d("single training:", mArticles.toString());
-
 
                     String title = mArticle.getString(TAG_TITLE);
                     String created_at = mArticle.getString(TAG_DATE);

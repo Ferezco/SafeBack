@@ -3,6 +3,8 @@ package com.tri.felipe.safeback.View.Training;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +20,7 @@ import java.util.UUID;
 /**
  * Created by Felipe on 14-10-20.
  */
-public class SingleItemFragment extends Fragment {
+public class TrainingFragment extends Fragment {
 
     private Training mTraining;
     private ImageView mHeaderImage;
@@ -28,11 +30,11 @@ public class SingleItemFragment extends Fragment {
     public static final String EXTRA_SINGLE_ID =
             "com.tri.felipe.safeback.single_id";
 
-    public static SingleItemFragment newInstance(UUID trainingId){
+    public static TrainingFragment newInstance(UUID trainingId){
         Bundle args = new Bundle();
         args.putSerializable(EXTRA_SINGLE_ID, trainingId);
 
-        SingleItemFragment fragment = new SingleItemFragment();
+        TrainingFragment fragment = new TrainingFragment();
         fragment.setArguments(args);
 
         return fragment;
@@ -56,7 +58,7 @@ public class SingleItemFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     Intent i = new Intent(getActivity(), SingleImageActivity.class);
-                    i.putExtra(SingleItemFragment.EXTRA_SINGLE_ID, mTraining.getId());
+                    i.putExtra(TrainingFragment.EXTRA_SINGLE_ID, mTraining.getId());
                     startActivity(i);
                 }
             });
@@ -65,8 +67,8 @@ public class SingleItemFragment extends Fragment {
         mTitle.setText(mTraining.getTitle());
 
         mDate = (TextView) rootView.findViewById(R.id.training_date);
-        android.text.format.DateFormat df = new android.text.format.DateFormat();
-        mDate.setText(df.format("EEEE, LLLL d, y", mTraining.getDate()));
+        Log.d("Date: ", DateFormat.format("EEEE, LLLL d, y", mTraining.getDate()).toString());
+        mDate.setText(DateFormat.format("EEEE, LLLL d, y", mTraining.getDate()));
 
         mDescription = (TextView) rootView.findViewById(R.id.training_description);
         mDescription.setText(mTraining.getDescription());

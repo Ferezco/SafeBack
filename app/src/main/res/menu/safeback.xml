@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/action_save"
+        android:title="@string/action_save"
+        android:icon="@drawable/ic_action_save"
+        android:orderInCategory="1"
+        android:showAsAction="ifRoom"/>
+
+    <item android:id="@+id/action_units"
+        android:title="Metric"
+        android:icon="@android:drawable/ic_input_add"
+        android:orderInCategory="50"
+        android:showAsAction="never" />
+
+    <item android:id="@+id/action_load_skeleton"
+        android:title="Load Skeleton"
+        android:orderInCategory="100"
+        android:showAsAction="never"/>
+</menu>

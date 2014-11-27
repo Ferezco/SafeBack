@@ -5,6 +5,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.app.NavUtils;
 import android.support.v4.view.ViewPager;
 import android.view.MenuItem;
 
@@ -29,6 +30,7 @@ public class TrainingPagerActivity extends FragmentActivity{
         mViewPager.setId(R.id.viewPager);
         setContentView(mViewPager);
         setTitle(R.string.info_list_title);
+        getActionBar().setHomeButtonEnabled(true);
 
         mTrainings = TrainingController.get(this).getTrainings();
 
@@ -37,7 +39,7 @@ public class TrainingPagerActivity extends FragmentActivity{
             @Override
             public Fragment getItem(int position) {
                 Training crime = mTrainings.get(position);
-                return SingleItemFragment.newInstance(crime.getId());
+                return TrainingFragment.newInstance(crime.getId());
             }
 
             @Override
@@ -47,7 +49,7 @@ public class TrainingPagerActivity extends FragmentActivity{
         });
 
         UUID crimeId = (UUID)getIntent()
-                .getSerializableExtra(SingleItemFragment.EXTRA_SINGLE_ID);
+                .getSerializableExtra(TrainingFragment.EXTRA_SINGLE_ID);
         for (int i = 0; i <mTrainings.size(); i++){
             if (mTrainings.get(i).getId().equals((crimeId))){
                 mViewPager.setCurrentItem(i);
@@ -63,7 +65,8 @@ public class TrainingPagerActivity extends FragmentActivity{
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-        if (id == R.id.action_settings) {
+        if (id == android.R.id.home) {
+            super.onBackPressed();
             return true;
         }
         return super.onOptionsItemSelected(item);

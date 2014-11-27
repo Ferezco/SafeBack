@@ -1,10 +1,11 @@
 package com.tri.felipe.safeback.View;
 
 import android.app.Activity;
-
 import android.app.ActionBar;
 import android.app.FragmentManager;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.support.v4.widget.DrawerLayout;
 
@@ -46,8 +47,8 @@ public class NavigationActivity extends Activity
     public void onNavigationDrawerItemSelected(int position) {
         // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
-
-        switch (position){
+        Log.d("position clicked", Integer.toString(position));
+        switch (position) {
             case 0:
                 fragmentManager.beginTransaction()
                         .replace(R.id.container, new ArticleFragment())
@@ -62,6 +63,10 @@ public class NavigationActivity extends Activity
                 fragmentManager.beginTransaction()
                         .replace(R.id.container, new SkeletonFragment())
                         .commit();
+                break;
+            case 3:
+                break;
+            case 4:
                 break;
         }
     }
@@ -86,22 +91,4 @@ public class NavigationActivity extends Activity
         actionBar.setDisplayShowTitleEnabled(true);
         actionBar.setTitle(mTitle);
     }
-
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
-            // Only show items in the action bar relevant to this screen
-            // if the drawer is not showing. Otherwise, let the drawer
-            // decide what to show in the action bar.
-            getMenuInflater().inflate(R.menu.navigation, menu);
-            restoreActionBar();
-            return true;
-        }
-        return super.onCreateOptionsMenu(menu);
-    }
-
-
-
-
 }

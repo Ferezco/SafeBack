@@ -35,11 +35,14 @@ public class ArticleActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.fragment_training);
+        getActionBar().setHomeButtonEnabled(true);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getActionBar().setTitle(R.string.app_name);
         UUID articleId = (UUID) getIntent()
                 .getSerializableExtra(ArticleFragment.EXTRA_SINGLE_ID);
         mArticle = ArticleController.get(this).getArticle(articleId);
         mHeaderImage = (ImageView) findViewById(R.id.training_photo);
-        mHeaderImage.setImageResource(R.drawable.header_imgs);
+        mHeaderImage.setImageResource(R.drawable.header_img2);
 
         mTitle = (TextView) findViewById(R.id.training_title);
         mTitle.setText(mArticle.getTitle());

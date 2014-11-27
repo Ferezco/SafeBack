@@ -1,45 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="72dp"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
 
-    <ImageView
-        android:id="@+id/training_list_item_iconImageView"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:gravity="center"
-        android:layout_alignParentLeft="true"
-        android:layout_margin="16dp"/>
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="horizontal"
+        android:layout_margin="16dp">
 
-    <LinearLayout
-        android:id="@+id/article_button_layout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        android:layout_toRightOf="@id/training_list_item_iconImageView"
-        >
-
-        <TextView
-            android:id="@+id/training_list_item_titleTextView"
+        <ImageView
+            android:id="@+id/training_list_item_iconImageView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Training_title"
-            android:textSize="16sp"
-            />
-        <!--android:layout_toLeftOf="@id/training_list_item_iconImageView" -->
+            android:padding="4dp"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:layout_marginRight="16dp"
+            android:background="@drawable/circle"/>
 
-        <TextView
-            android:id="@+id/training_list_item_descriptionTextView"
+        <LinearLayout
+            android:id="@+id/training_button_layout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Training Description"
-            android:textSize="14sp"
-            android:textColor="#939598"
-            />
+            android:orientation="vertical"
+            android:layout_toRightOf="@id/training_list_item_iconImageView">
 
-        </LinearLayout>
+            <TextView
+                android:id="@+id/training_list_item_titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Training_title"
+                android:textSize="16sp"/>
 
-</RelativeLayout>
+            <TextView
+                android:id="@+id/training_list_item_descriptionTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Training Description"
+                android:textSize="14sp"
+                android:textColor="#939598" />
+
+            </LinearLayout>
+    </RelativeLayout>
+</FrameLayout>

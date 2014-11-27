@@ -26,25 +26,12 @@ public class Story {
         return mTitle;
     }
 
-    public void setTitle(String mTitle) {
-        this.mTitle = mTitle;
-    }
-
     public Date getDate() {
         return mDate;
-    }
-
-    public void setDate(Date mDate) {
-        this.mDate = mDate;
     }
 
     public String getDescription() {
         return mDescription;
     }
-
-    public void setDescription(String description) {
-        mDescription = description;
-    }
-
 
 }
