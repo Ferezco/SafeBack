@@ -16,17 +16,14 @@
             android:id="@+id/skeleton_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true">
-
-        </RelativeLayout>
+            android:layout_marginBottom="100dp"/>
 
         <TextView
             android:id="@+id/total_force"
-            android:layout_width="100dp"
-            android:layout_height="50dp"
-            android:text="0 N"
-            android:textSize="18sp"
-            android:textColor="#ff4a00"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="22sp"
+            android:textStyle="bold"
             android:layout_marginTop="16dp"
             android:layout_marginLeft="16dp"
             android:layout_alignParentTop="true"

@@ -9,6 +9,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.opengl.GLSurfaceView;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 
@@ -34,11 +36,19 @@ import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.threed.jpct.Config;
+import com.threed.jpct.FrameBuffer;
+import com.threed.jpct.Light;
+import com.threed.jpct.Matrix;
+import com.threed.jpct.RGBColor;
+import com.threed.jpct.SimpleVector;
+import com.threed.jpct.Texture;
+import com.threed.jpct.TextureManager;
+import com.threed.jpct.World;
 import com.tri.felipe.safeback.Controller.JSONParser;
 import com.tri.felipe.safeback.Controller.SkeletonController;
 import com.tri.felipe.safeback.Model.Skeleton;
-import com.tri.felipe.safeback.Model.Training;
+import com.tri.felipe.safeback.Model.Skeleton.JointAngle;
 import com.tri.felipe.safeback.R;
 import com.tri.felipe.safeback.View.NavigationActivity;
 
@@ -52,19 +62,39 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 
+import javax.microedition.khronos.egl.EGL10;
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.egl.EGLDisplay;
+import javax.microedition.khronos.opengles.GL10;
+
+import raft.jpct.bones.Animated3D;
+import raft.jpct.bones.AnimatedGroup;
+import raft.jpct.bones.BonesIO;
+import raft.jpct.bones.Quaternion;
+import raft.jpct.bones.SkeletonPose;
 /**
  * Created by Felipe on 14-11-14.
  */
 public class SkeletonFragment extends Fragment {
 
     private SkeletonController control = new SkeletonController();
-    private TextView mTotalForce;
-    private int mForce = 0;
-    private RelativeLayout mSkeletonLayout;
-    private final SkeletonRenderer mRenderer = new SkeletonRenderer();
+
+    //3D Skeleton
+    private GLSurfaceView mGLView;
+    private final MyRenderer mRenderer = new MyRenderer();
+    private World world = null;
+    private CameraOrbitController cameraController;
+    private AnimatedGroup skeleton = null;
+    private long frameTime = System.currentTimeMillis();
+    private long aggregatedTime = 0;
+    private static final int GRANULARITY = 25;
+    private FrameBuffer frameBuffer = null;
+    private int FRONT_VIEW = 0;
+    //private final SkeletonRenderer mRenderer = new SkeletonRenderer();
 
     private static String URL_SKELTON = "http://104.131.178.112:8000/safeback/skeleton";
 
+    //Views
     private Spinner mJoint;
     private TextView mBottomText;
     private LinearLayout mTraitPanel;
@@ -91,11 +121,12 @@ public class SkeletonFragment extends Fragment {
     private TextView mBox;
     private SeekBar mBoxSeek;
     private EditText mBoxEdit;
-
     private EditText mSkeletonName;
     private EditText mSkeletonDescription;
     private AlertDialog.Builder SkeletonDialog;
     private ListView mSkeletonList;
+    private TextView mTotalForce;
+    private RelativeLayout mSkeletonLayout;
 
     //if user panel is expanded or not
     private boolean USER_EXPANDED = false;
@@ -103,14 +134,14 @@ public class SkeletonFragment extends Fragment {
     private boolean METRIC = true;
     //current joint being shown
     private int CURRENT_JOINT = 0;
+    private float FORCE;
 
     //SeekBar maximum values
     private static int USER_MAX = 250;
-    private static int SKELETON_MAX = 180;
-    private static int SKELETON_MID = 90;
     private Skeleton mSkeleton;
+    private ArrayList<JointAngle> mCurrentJoint;
 
-    //JSON
+    //Web component
     private JSONObject jSkeleton = null;
     private static final String TAG_TRAINING = "fields";
     private static final String TAG_TITLE = "title";
@@ -124,13 +155,13 @@ public class SkeletonFragment extends Fragment {
 
     private ArrayList<Skeleton> mSkeletons;
 
-    public Resources res = getActivity().getResources();
+    //public Resources res = getActivity().getResources();
 
-    private String[][] traits =
-            {{"Trunk Rotation", "Trunk Lateral Bending", "Trunk Extension"},
-                    {"L Shoulder Abduction", "R Shoulder Abduction",
-                            "L Shoulder  Extension", "R Shoulder Extenson"},
+    private String[][] traits = {
                     {"Neck Axial Twist", "Neck Lateral Bending", "Neck Extension"},
+                    {"L Shoulder Abduction", "R Shoulder Abduction",
+                    "L Shoulder  Extension", "R Shoulder Extenson"},
+                    {"Trunk Rotation", "Trunk Lateral Bending", "Trunk Extension"},
                     {"L Elbow Extension", "R Elbow Extension"}};
 
     @Override
@@ -145,15 +176,75 @@ public class SkeletonFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_skeleton, container, false);
 
-        /*GLSurfaceView mGLView = new GLSurfaceView(getActivity().getApplication());
-        mGLView.getHolder().setFormat(PixelFormat.TRANSPARENT);
-        mGLView.setRenderer(mRenderer);
+        //View to be filled by 3D skeleton
         mSkeletonLayout = (RelativeLayout) rootView.findViewById(R.id.skeleton_layout);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT);
-        params.addRule(RelativeLayout.ALIGN_TOP, RelativeLayout.TRUE);
-        mSkeletonLayout.addView(mGLView, params);*/
+        //3D skeletonView
+        mGLView = new GLSurfaceView(getActivity().getApplication());
 
+        mGLView.setEGLConfigChooser(new GLSurfaceView.EGLConfigChooser() {
+
+            @Override
+            public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
+                // Ensure that we get a 16bit framebuffer.
+                int[] attributes = new int[] { EGL10.EGL_DEPTH_SIZE, 16, EGL10.EGL_NONE };
+                EGLConfig[] configs = new EGLConfig[1];
+                int[] result = new int[1];
+                egl.eglChooseConfig(display, attributes, configs, 1, result);
+                return configs[0];
+            }
+        });
+
+        //mGLView.getHolder().setFormat(PixelFormat.TRANSPARENT);
+        mGLView.setRenderer(mRenderer);
+        mSkeletonLayout.addView(mGLView);
+        mSkeletonLayout.setOnClickListener(new OnClickListener() {
+
+            //Handles touch to the skeleton switch orientation of the view
+            @Override
+            public void onClick(View v) {
+                switch (FRONT_VIEW) {
+                    case 0:
+                        rightSagittalView();
+                        FRONT_VIEW++;
+                        break;
+                    case 1:
+                        leftSagittalView();
+                        FRONT_VIEW++;
+                        break;
+                    case 2:
+                        frontView();
+                        FRONT_VIEW = 0;
+                        break;
+                }
+            }
+        });
+        world = new World();
+        addSkeleton();
+
+        world.setAmbientLight(250, 250, 250);
+        world.buildAllObjects();
+
+        float[] boundingBox = mRenderer.calcBoundingBox();
+        float height = (boundingBox[3]); // ninja height
+        new Light(world).setPosition(new SimpleVector(0, -height/2, height));
+
+        cameraController = new CameraOrbitController(world.getCamera());
+        cameraController.cameraAngle = 0;
+        cameraController.placeCamera();
+        applyAllRotations();
+
+        //Wiring up View
+        mCurrentJoint = mSkeleton.getJoints().get(CURRENT_JOINT);
         mTotalForce = (TextView) rootView.findViewById(R.id.total_force);
+        mTotalForce.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                Toast.makeText(getActivity(),
+                        String.format("%.0f N is being applied to the lower back",FORCE),
+                        Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
 
         mBottomText = (TextView) rootView.findViewById(R.id.skeleton_user_info);
         mTraitPanel = (LinearLayout) rootView.findViewById(R.id.skeleton_trait_panel);
@@ -163,19 +254,40 @@ public class SkeletonFragment extends Fragment {
 
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                setVisible();
+                Log.d("Skeleton", String.format("Neck %d %d %d, Shoulder %d %d %d %d, Trunk %d %d %d, Elbow %d %d",
+                        mSkeleton.getJoints().get(0).get(0).getAngle(),
+                        mSkeleton.getJoints().get(0).get(1).getAngle(),
+                        mSkeleton.getJoints().get(0).get(2).getAngle(),
+                        mSkeleton.getJoints().get(1).get(0).getAngle(),
+                        mSkeleton.getJoints().get(1).get(1).getAngle(),
+                        mSkeleton.getJoints().get(1).get(2).getAngle(),
+                        mSkeleton.getJoints().get(1).get(3).getAngle(),
+                        mSkeleton.getJoints().get(2).get(0).getAngle(),
+                        mSkeleton.getJoints().get(2).get(1).getAngle(),
+                        mSkeleton.getJoints().get(2).get(2).getAngle(),
+                        mSkeleton.getJoints().get(3).get(0).getAngle(),
+                        mSkeleton.getJoints().get(3).get(1).getAngle()));
                 CURRENT_JOINT = position;
+
+                mCurrentJoint = mSkeleton.getJoints().get(position);
+                //resets the visibility of all seekbars
+                setVisible();
+
                 mTrait1.setText(traits[position][0]);
-                mCount1.setText(Integer.toString(mSkeleton.getJoints()[position][0]));
-                mSeek1.setProgress(mSkeleton.getJoints()[position][0] + SKELETON_MID);
+                mCount1.setText(Integer.toString(mCurrentJoint.get(0).getAngle()));
+                Log.d("Joint 1", Float.toString(mCurrentJoint.get(0).getAngle() -
+                        mCurrentJoint.get(0).getMinAngle()));
+                mSeek1.setProgress(mCurrentJoint.get(0).getAngle() -
+                        mCurrentJoint.get(0).getMinAngle());
+                mSeek1.setMax(mCurrentJoint.get(0).getMidAngle());
+
+                Log.d("joint 1", "angle" + mCurrentJoint.get(0).getAngle());
 
                 mTrait2.setText(traits[position][1]);
-                mCount2.setText(Integer.toString(mSkeleton.getJoints()[position][1]));
-                mSeek2.setProgress(mSkeleton.getJoints()[position][1] + SKELETON_MID);
-
-                for (int i = 0; i < mSkeleton.getJoints()[position].length; i++){
-                    Log.d("Trait" + position, "value:" + mSkeleton.getJoints()[position][i]);
-                }
+                mCount2.setText(Integer.toString(mCurrentJoint.get(1).getAngle()));
+                mSeek2.setProgress(mCurrentJoint.get(1).getAngle() -
+                        mCurrentJoint.get(1).getMinAngle());
+                mSeek2.setMax(mCurrentJoint.get(1).getMidAngle());
 
                 if (position == 3) {
                     mTrait3.setVisibility(View.INVISIBLE);
@@ -188,18 +300,28 @@ public class SkeletonFragment extends Fragment {
                 }
                 else {
                     mTrait3.setText(traits[position][2]);
-                    mCount3.setText(Integer.toString(mSkeleton.getJoints()[position][2]));
-                    mSeek3.setProgress(mSkeleton.getJoints()[position][2] + SKELETON_MID);
+                    mCount3.setText(Integer.toString(mCurrentJoint.get(2).getAngle()));
+                    mSeek3.setProgress(mCurrentJoint.get(2).getAngle() -
+                            mCurrentJoint.get(2).getMinAngle());
+                    mSeek3.setMax(mCurrentJoint.get(2).getMidAngle());
 
                     if (position == 1) {
                         mTrait4.setText(traits[position][3]);
-                        mCount4.setText(Integer.toString(mSkeleton.getJoints()[position][3]));
-                        mSeek4.setProgress(mSkeleton.getJoints()[position][3] + SKELETON_MID);
+                        mCount4.setText(Integer.toString(mCurrentJoint.get(3).getAngle()));
+                        mSeek4.setProgress(mCurrentJoint.get(3).getAngle() -
+                                mCurrentJoint.get(3).getMinAngle());
+                        mSeek4.setMax(mCurrentJoint.get(3).getMidAngle());
+
                     } else {
                         mTrait4.setVisibility(View.INVISIBLE);
                         mSeek4.setVisibility(View.INVISIBLE);
                         mCount4.setVisibility(View.INVISIBLE);
                     }
+                }
+                //Log all angles for the current joint and changes
+                for (int i = 0; i < mCurrentJoint.size(); i++){
+                    Log.d("Trait" + position, "value:" + mCurrentJoint.get(i).getAngle());
+
                 }
             }
 
@@ -209,19 +331,34 @@ public class SkeletonFragment extends Fragment {
             }
         });
 
+        LinearLayout trait = (LinearLayout) rootView.findViewById(R.id.skeleton_trait_panel);
+        trait.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                return true;
+            }
+        });
         mTrait1 = (TextView) rootView.findViewById(R.id.skeleton_trait1_text);
         mTrait1.setText(traits[CURRENT_JOINT][0]);
         mSeek1 = (SeekBar) rootView.findViewById(R.id.skeleton_trait1_slider);
-        mSeek1.setMax(SKELETON_MAX);
-        mSeek1.setProgress(SKELETON_MID);
+        mSeek1.setMax(mSkeleton.getJoints().get(0).get(0).getMidAngle());
         mSeek1.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mForce -= mSkeleton.getJoints()[CURRENT_JOINT][0];
-                mSkeleton.getJoints()[CURRENT_JOINT][0] = progress - SKELETON_MID;
-                mCount1.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][0]));
-                mForce += mSkeleton.getJoints()[CURRENT_JOINT][0];
-                mTotalForce.setText(Integer.toString(mForce) + " N");
+                JointAngle joint = mCurrentJoint.get(0);
+                Log.d("joint 1", "before angle" + joint.getAngle());
+                Log.d("joint 1", "progress" + progress);
+                joint.updatePrevAngle();
+                joint.setAngle(progress + joint.getMinAngle());
+                Log.d("joint 1", "after angle" + joint.getAngle());
+                mCount1.setText(Integer.toString(joint.getAngle()));
+                if(joint.getAngle() < 0)
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getNegativePoseDirection());
+                else
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getPositivePoseDirection());
+                setForce();
             }
 
             @Override
@@ -238,16 +375,22 @@ public class SkeletonFragment extends Fragment {
         mTrait2 = (TextView) rootView.findViewById(R.id.skeleton_trait2_text);
         mTrait2.setText(traits[CURRENT_JOINT][1]);
         mSeek2 = (SeekBar) rootView.findViewById(R.id.skeleton_trait2_slider);
-        mSeek2.setMax(SKELETON_MAX);
-        mSeek2.setProgress(SKELETON_MID);
+        mSeek2.setMax(mSkeleton.getJoints().get(0).get(1).getMidAngle());
         mSeek2.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mForce -= mSkeleton.getJoints()[CURRENT_JOINT][1];
-                mSkeleton.getJoints()[CURRENT_JOINT][1] = progress - SKELETON_MID;
-                mCount2.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][1]));
-                mForce += mSkeleton.getJoints()[CURRENT_JOINT][1];
-                mTotalForce.setText(Integer.toString(mForce) + " N");
+                //mForce -= mSkeleton.getJoints()[CURRENT_JOINT][1];
+                JointAngle joint = mCurrentJoint.get(1);
+                joint.updatePrevAngle();
+                joint.setAngle(progress + joint.getMinAngle());
+                mCount2.setText(Integer.toString(joint.getAngle()));
+                if(joint.getAngle() < 0)
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getNegativePoseDirection());
+                else
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getPositivePoseDirection());
+                setForce();
             }
 
             @Override
@@ -265,16 +408,22 @@ public class SkeletonFragment extends Fragment {
         mTrait3 = (TextView) rootView.findViewById(R.id.skeleton_trait3_text);
         mTrait3.setText(traits[0][2]);
         mSeek3 = (SeekBar) rootView.findViewById(R.id.skeleton_trait3_slider);
-        mSeek3.setMax(SKELETON_MAX);
-        mSeek3.setProgress(SKELETON_MID);
+        mSeek3.setMax(mSkeleton.getJoints().get(0).get(2).getMidAngle());
         mSeek3.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mForce -= mSkeleton.getJoints()[CURRENT_JOINT][2];
-                mSkeleton.getJoints()[CURRENT_JOINT][2] = progress - SKELETON_MID;
-                mCount3.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][2]));
-                mForce += mSkeleton.getJoints()[CURRENT_JOINT][2];
-                mTotalForce.setText(Integer.toString(mForce) + " N");
+                //mForce -= mSkeleton.getJoints().get()[CURRENT_JOINT][2];
+                JointAngle joint = mCurrentJoint.get(2);
+                joint.updatePrevAngle();
+                joint.setAngle(progress + joint.getMinAngle());
+                mCount3.setText(Integer.toString(joint.getAngle()));
+                if(joint.getAngle() < 0)
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getNegativePoseDirection());
+                else
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getPositivePoseDirection());
+                setForce();
             }
 
             @Override
@@ -292,15 +441,22 @@ public class SkeletonFragment extends Fragment {
         mTrait4 = (TextView) rootView.findViewById(R.id.skeleton_trait4_text);
         mTrait4.setVisibility(View.INVISIBLE);
         mSeek4 = (SeekBar) rootView.findViewById(R.id.skeleton_trait4_slider);
-        mSeek4.setMax(SKELETON_MAX);
+        //=mSeek4.setMax(mSkeleton.getJoints().get(0).get(3).getMidAngle());
         mSeek4.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                mForce -= mSkeleton.getJoints()[CURRENT_JOINT][3];
-                mSkeleton.getJoints()[CURRENT_JOINT][3] = progress - SKELETON_MID;
-                mCount4.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][3]));
-                mForce += mSkeleton.getJoints()[CURRENT_JOINT][3];
-                mTotalForce.setText(Integer.toString(mForce) + " N");
+                //mForce -= mSkeleton.getJoints()[CURRENT_JOINT][3];
+                JointAngle joint = mCurrentJoint.get(3);
+                joint.updatePrevAngle();
+                joint.setAngle(progress + joint.getMinAngle());
+                mCount4.setText(Integer.toString(joint.getAngle()));
+                if(joint.getAngle() < 0)
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getNegativePoseDirection());
+                else
+                    applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                            - joint.getPrevAngle(), joint.getPositivePoseDirection());
+                setForce();
             }
 
             @Override
@@ -332,7 +488,9 @@ public class SkeletonFragment extends Fragment {
                             control.PoundToKilo(Integer.parseInt(
                                     mWeightEdit.getText().toString())),
                             USER_MAX));
+
                 }
+                setForce();
             }
         });
         mWeightSeek.setMax(USER_MAX);
@@ -347,6 +505,7 @@ public class SkeletonFragment extends Fragment {
                     mWeightEdit.setText(Integer.toString(control.
                             KiloToPound(Math.min(progress, USER_MAX))));
                 }
+                setForce();
             }
 
             @Override
@@ -377,6 +536,7 @@ public class SkeletonFragment extends Fragment {
                                     mWeightEdit.getText().toString())),
                             USER_MAX));
                 }
+                setForce();
             }
         });
         mHeightSeek.setMax(USER_MAX);
@@ -517,6 +677,7 @@ public class SkeletonFragment extends Fragment {
 
             }
         });
+        setForce();
         return rootView;
     }
 
@@ -606,8 +767,8 @@ public class SkeletonFragment extends Fragment {
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Skeleton s = (Skeleton) mSkeletonList.getAdapter().getItem(position);
-                        mSkeleton = s;
-                        UpdateControls();
+                        mSkeleton = s.copy();
+                        //UpdateControls();
                     }
                 });
                 if (mSkeletons.size() == 0){
@@ -626,10 +787,22 @@ public class SkeletonFragment extends Fragment {
                         titleDivider.setBackgroundColor(Color.parseColor("#036bac"));
                 }
                 break;
+            case R.id.reset_skeleton:
+                mSkeleton = new Skeleton();
+                applyAllRotations();
         }
         return super.onOptionsItemSelected(item);
     }
 
+
+    private void applyAllRotations(){
+        for (ArrayList<JointAngle> aj : mSkeleton.getJoints().values()){
+            for (JointAngle joint : aj){
+                applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                        - joint.getPrevAngle(), joint.getNegativePoseDirection());
+            }
+        }
+    }
 
     private void setVisible(){
         mTrait3.setVisibility(View.VISIBLE);
@@ -640,7 +813,7 @@ public class SkeletonFragment extends Fragment {
         mCount4.setVisibility(View.VISIBLE);
 
     }
-    private void UpdateControls() {
+    /*private void UpdateControls() {
         mWeight.setText("User Weight: kg");
         mWeightSeek.setProgress(mSkeleton.getWeight());
         mWeightEdit.setText(Integer.toString(mSkeleton.getWeight()));
@@ -653,7 +826,10 @@ public class SkeletonFragment extends Fragment {
         mBoxSeek.setProgress(mSkeleton.getBoxWeight());
         mBoxEdit.setText(Integer.toString(mSkeleton.getBoxWeight()));
 
-        mSeek1.setProgress(mSkeleton.getJoints()[CURRENT_JOINT][0] + SKELETON_MID);
+        ArrayList<JointAngle> joint = mSkeleton.getJoints().get(CURRENT_JOINT);
+
+        mSeek1.setMax(joint.get(0).getMidAngle());
+        mSeek1.setProgress(joint.get(0).getAngle() + joint.get(0).getMinAngle());
         mCount1.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][0]));
         mSeek2.setProgress(mSkeleton.getJoints()[CURRENT_JOINT][1] + SKELETON_MID);
         mCount2.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][1]));
@@ -662,7 +838,97 @@ public class SkeletonFragment extends Fragment {
         mSeek4.setProgress(mSkeleton.getJoints()[CURRENT_JOINT][3] + SKELETON_MID);
         mCount4.setText(Integer.toString(mSkeleton.getJoints()[CURRENT_JOINT][3]));
         METRIC = true;
+    }*/
 
+    private void addSkeleton() {
+        try {
+            Resources res = getResources();
+            skeleton = BonesIO.loadGroup(res.openRawResource(R.raw.skeleton02));
+
+            skeleton.setSkeletonPose(new SkeletonPose(skeleton.get(0).getSkeleton()));
+            frontView();
+            world.addObject(skeleton.get(0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void rightSagittalView() {
+        skeleton.getRoot().clearRotation();
+        skeleton.getRoot().clearTranslation();
+        skeleton.getRoot().translate(-0.1f, 0.95f, 18.f);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 0, 1), (float) Math.PI);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) -Math.PI/2);
+        skeleton.getRoot().translate(0, 0, 0);
+    }
+
+    private void leftSagittalView() {
+        skeleton.getRoot().clearRotation();
+        skeleton.getRoot().clearTranslation();
+        skeleton.getRoot().translate(0f, 0.95f, 18f);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 0, 1), (float) Math.PI);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) Math.PI/2);
+        skeleton.getRoot().translate(0, 0, 0);
+    }
+
+    private void frontView() {
+        skeleton.getRoot().clearRotation();
+        skeleton.getRoot().clearTranslation();
+        skeleton.getRoot().translate(0f, 0.95f, 18f);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 0, 1), (float) Math.PI);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), 0);
+        skeleton.getRoot().translate(0, 0, 0);
+    }
+
+    private void applyRotation(int id, Matrix rotation, int angle, SimpleVector poseDirection) {
+        SkeletonPose pose = skeleton.get(0).getSkeletonPose();
+        rotateJoint(pose, rotation, id, poseDirection, (float) Math.toRadians(angle), 1f);
+
+        pose.updateTransforms();
+        skeleton.applySkeletonPose();
+        skeleton.applyAnimation();
+    }
+
+    private void rotateJoint(SkeletonPose pose, Matrix rotation, int jointIndex, SimpleVector bindPoseDirection, float angle, final float targetStrength) {
+        final int parentIndex = pose.getSkeleton().getJoint(jointIndex).getParentIndex();
+
+        // neckBindGlobalTransform is the neck bone -> model space transform. essentially, it is the world transform of
+        // the neck bone in bind pose.
+        final Matrix jointInverseBindPose = pose.getSkeleton().getJoint(jointIndex).getInverseBindPose();
+        final Matrix jointBindPose = jointInverseBindPose.invert();
+
+
+        // Get a vector representing forward direction in neck space, use inverse to take from world -> neck space.
+        SimpleVector forwardDirection = new SimpleVector(bindPoseDirection);
+        forwardDirection.rotate(jointInverseBindPose);
+
+        // Calculate a rotation to go from one direction to the other and set that rotation on a blank transform.
+        Quaternion quat = new Quaternion();
+        rotation.rotateAxis(bindPoseDirection, angle);
+        quat.rotate(rotation);
+
+        final Matrix subGlobal = quat.getRotationMatrix();
+
+        // now remove the global/world transform of the neck's parent bone, leaving us with just the local transform of
+        // neck + rotation.
+        subGlobal.matMul(jointBindPose);
+        subGlobal.matMul(pose.getSkeleton().getJoint(parentIndex).getInverseBindPose());
+
+        // set that as the neck's transform
+        pose.getLocal(jointIndex).setTo(subGlobal);
+    }
+
+    private void setForce(){
+        FORCE = mSkeleton.calculateForce(skeleton);
+        if (FORCE < 3400){
+            mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            mTotalForce.setText("Ok");
+        }
+        else{
+            mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+            mTotalForce.setText("Too Heavy");
+        }
     }
 
     private class SkeletonAdapter extends ArrayAdapter<Skeleton> {
@@ -711,7 +977,7 @@ public class SkeletonFragment extends Fragment {
 
         @Override
         protected Void doInBackground(String... args) {
-            ArrayList<NameValuePair> params = new ArrayList<NameValuePair>();
+            ArrayList<NameValuePair> params = new ArrayList<>();
             JSONParser jParser = new JSONParser();
             JSONArray json = jParser.makeHttpRequest(URL_SKELTON, "GET", params);
             SimpleDateFormat df = new SimpleDateFormat("yyyy-mm-dd");
@@ -728,16 +994,18 @@ public class SkeletonFragment extends Fragment {
                     String neck = jSkeleton.getString(TAG_NECK);
                     String elbow = jSkeleton.getString(TAG_ELBOW);
                     String[] user = jSkeleton.getString(TAG_USER).split(",");
+                    Log.d("loaded", description);
 
-                    int[][] joints = new int[4][4];
-                    joints[0] = JointsFromString(trunk);
-                    joints[1] = JointsFromString(shoulder);
-                    joints[2] = JointsFromString(neck);
-                    joints[3] = JointsFromString(elbow);
-;                   Skeleton s = new Skeleton(joints,
+                    int[] t = JointsFromString(trunk);
+                    int[] s = JointsFromString(shoulder);
+                    int[] n = JointsFromString(neck);
+                    int[] e = JointsFromString(elbow);
+                    Skeleton skel = new Skeleton(t[0], t[1], t[2], s[0], s[1], s[2], s[3], n[0],
+                            n[1], n[2], e[0], e[1],
                             Integer.parseInt(user[0]), Integer.parseInt(user[1]),
                             Integer.parseInt(user[2]), title, description, df.parse(created_at));
-                    mSkeletons.add(s);
+                    Log.d("loaded", skel.getTitle() + " " + skel.getDescription());
+                    mSkeletons.add(skel);
                 }
             }catch (JSONException e){
                 e.printStackTrace();
@@ -762,5 +1030,102 @@ public class SkeletonFragment extends Fragment {
             output[i] = Integer.parseInt(broken[i]);
         }
         return output;
+    }
+
+    class MyRenderer implements GLSurfaceView.Renderer {
+        private int fps = 0;
+        private int lfps = 0;
+
+        private long fpsTime = System.currentTimeMillis();
+
+        public MyRenderer() {
+            Config.maxPolysVisible = 5000;
+            Config.farPlane = 1500;
+        }
+
+        @Override
+        public void onSurfaceChanged(GL10 gl, int w, int h) {
+            if (frameBuffer != null) {
+                frameBuffer.dispose();
+            }
+
+            frameBuffer = new FrameBuffer(gl, w, h);
+
+            cameraController.placeCamera();
+        }
+
+        @Override
+        public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+
+            TextureManager.getInstance().flush();
+            Resources res = getResources();
+
+            Texture texture = new Texture(res.openRawResource(R.raw.skeleton_texture));
+            //texture.keepPixelData(true);
+            TextureManager.getInstance().addTexture("texture", texture);
+
+            for (Animated3D a : skeleton)
+                a.setTexture("texture");
+        }
+
+        @Override
+        public void onDrawFrame(GL10 gl) {
+
+            if (frameBuffer == null)
+                return;
+
+            long now = System.currentTimeMillis();
+            aggregatedTime += (now - frameTime);
+            frameTime = now;
+
+            if (aggregatedTime > 1000) {
+                aggregatedTime = 0;
+            }
+
+            while (aggregatedTime > GRANULARITY) {
+                aggregatedTime -= GRANULARITY;
+                cameraController.placeCamera();
+
+            }
+
+            frameBuffer.clear(new RGBColor(255, 255, 255, 255));
+
+            world.renderScene(frameBuffer);
+            world.draw(frameBuffer);
+
+            frameBuffer.display();
+
+            if (System.currentTimeMillis() - fpsTime >= 1000) {
+                lfps = (fps + lfps) >> 1;
+                fps = 0;
+                fpsTime = System.currentTimeMillis();
+            }
+            fps++;
+
+        }
+
+        /** calculates and returns whole bounding box of skinned group */
+        protected float[] calcBoundingBox() {
+            float[] box = null;
+
+            for (Animated3D skin : skeleton) {
+                float[] skinBB = skin.getMesh().getBoundingBox();
+
+                if (box == null) {
+                    box = skinBB;
+                } else {
+                    // x
+                    box[0] = Math.min(box[0], skinBB[0]);
+                    box[1] = Math.min(box[1], skinBB[1]);
+                    // y
+                    box[2] = Math.min(box[2], skinBB[2]);
+                    box[3] = Math.min(box[3], skinBB[3]);
+                    // z
+                    box[4] = Math.min(box[4], skinBB[4]);
+                    box[5] = Math.min(box[5], skinBB[5]);
+                }
+            }
+            return box;
+        }
     }
 }

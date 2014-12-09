@@ -17,9 +17,9 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
 
     <string-array name="joint_control_panel_entries">
-        <item>Trunk</item>
-        <item>Shoulder</item>
         <item>Neck</item>
+        <item>Shoulder</item>
+        <item>Trunk</item>
         <item>Elbow</item>
     </string-array>
 

@@ -16,4 +16,8 @@
         android:title="Load Skeleton"
         android:orderInCategory="100"
         android:showAsAction="never"/>
+    <item android:id="@+id/reset_skeleton"
+        android:title="Reset Skeleton"
+        android:orderInCategory="120"
+        android:showAsAction="never"/>
 </menu>
