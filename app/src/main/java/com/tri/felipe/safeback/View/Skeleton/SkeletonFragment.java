@@ -45,17 +45,11 @@ import com.threed.jpct.SimpleVector;
 import com.threed.jpct.Texture;
 import com.threed.jpct.TextureManager;
 import com.threed.jpct.World;
-import com.tri.felipe.safeback.Controller.JSONParser;
 import com.tri.felipe.safeback.Controller.SkeletonController;
 import com.tri.felipe.safeback.Model.Skeleton;
-import com.tri.felipe.safeback.Model.Skeleton.JointAngle;
+import com.tri.felipe.safeback.Model.JointAngle;
 import com.tri.felipe.safeback.R;
 import com.tri.felipe.safeback.View.NavigationActivity;
-
-import org.apache.http.NameValuePair;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -90,9 +84,7 @@ public class SkeletonFragment extends Fragment {
     private static final int GRANULARITY = 25;
     private FrameBuffer frameBuffer = null;
     private int FRONT_VIEW = 0;
-    //private final SkeletonRenderer mRenderer = new SkeletonRenderer();
 
-    private static String URL_SKELTON = "http://104.131.178.112:8000/safeback/skeleton";
 
     //Views
     private Spinner mJoint;
@@ -140,18 +132,6 @@ public class SkeletonFragment extends Fragment {
     private static int USER_MAX = 250;
     private Skeleton mSkeleton;
     private ArrayList<JointAngle> mCurrentJoint;
-
-    //Web component
-    private JSONObject jSkeleton = null;
-    private static final String TAG_TRAINING = "fields";
-    private static final String TAG_TITLE = "title";
-    private static final String TAG_DESCRIPTION = "description";
-    private static final String TAG_DATE = "date";
-    private static final String TAG_TRUNK = "trunk";
-    private static final String TAG_SHOULDER = "shoulder";
-    private static final String TAG_NECK = "neck";
-    private static final String TAG_ELBOW = "elbow";
-    private static final String TAG_USER = "user";
 
     private ArrayList<Skeleton> mSkeletons;
 
@@ -218,6 +198,7 @@ public class SkeletonFragment extends Fragment {
                 }
             }
         });
+
         world = new World();
         addSkeleton();
 
@@ -772,7 +753,7 @@ public class SkeletonFragment extends Fragment {
                     }
                 });
                 if (mSkeletons.size() == 0){
-                    new LoadAllSkeletons().execute();
+                    //new LoadAllSkeletons().execute();
                 }
                 SkeletonAdapter adapter = new SkeletonAdapter(mSkeletons);
                 mSkeletonList.setAdapter(adapter);
@@ -962,7 +943,7 @@ public class SkeletonFragment extends Fragment {
         }
     }
 
-    class LoadAllSkeletons extends AsyncTask<String, String, Void> {
+    /*class LoadAllSkeletons extends AsyncTask<String, String, Void> {
 
         ProgressDialog pDialog;
         @Override
@@ -1021,7 +1002,7 @@ public class SkeletonFragment extends Fragment {
             SkeletonAdapter adapter = new SkeletonAdapter(mSkeletons);
             mSkeletonList.setAdapter(adapter);
         }
-    }
+    }*/
 
     private int[] JointsFromString (String initial){
         String[] broken = initial.split(",");

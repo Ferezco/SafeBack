@@ -25,8 +25,8 @@
 
     <string-array name="drawer_label">
         <item>Home</item>
-        <item>Injury Prevention</item>
-        <item>SafeBack</item>
+        <item>Acknowledgements</item>
+        <item>Settings</item>
     </string-array>
 
     <string name="title_activity_single_image">SingleImageActivity</string>

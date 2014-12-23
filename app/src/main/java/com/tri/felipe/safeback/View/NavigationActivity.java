@@ -3,16 +3,12 @@ package com.tri.felipe.safeback.View;
 import android.app.Activity;
 import android.app.ActionBar;
 import android.app.FragmentManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
 import android.support.v4.widget.DrawerLayout;
 
 import com.tri.felipe.safeback.R;
-import com.tri.felipe.safeback.View.Article.ArticleFragment;
 import com.tri.felipe.safeback.View.Skeleton.SkeletonFragment;
-import com.tri.felipe.safeback.View.Training.TrainingListFragment;
 
 
 public class NavigationActivity extends Activity
@@ -51,22 +47,20 @@ public class NavigationActivity extends Activity
         switch (position) {
             case 0:
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, new ArticleFragment())
+                        .replace(R.id.container, new SkeletonFragment())
                         .commit();
                 break;
             case 1:
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, new TrainingListFragment())
+                        .replace(R.id.container, new AcknowledgementFragment())
                         .commit();
                 break;
             case 2:
                 fragmentManager.beginTransaction()
-                        .replace(R.id.container, new SkeletonFragment())
+                        .replace(R.id.container, new SettingsFragment())
                         .commit();
                 break;
-            case 3:
-                break;
-            case 4:
+            default:
                 break;
         }
     }

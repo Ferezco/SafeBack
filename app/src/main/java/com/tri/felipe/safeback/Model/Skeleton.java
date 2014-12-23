@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.UUID;
 
 import raft.jpct.bones.AnimatedGroup;
 import raft.jpct.bones.SkeletonPose;
@@ -15,6 +16,7 @@ import raft.jpct.bones.SkeletonPose;
  * Created by Felipe on 14-11-18.
  */
 public class Skeleton {
+    private UUID mId;
     private String mTitle;
     private Date mDate;
     private String mDescription;
@@ -64,6 +66,7 @@ public class Skeleton {
 
 
     public Skeleton(){
+        this.mId = UUID.randomUUID();
         this.mTitle = "";
         /* mJoints holds all of the information regarding a skeleton
          * each arraylist within the map corresponds to a joint in the skeleton
@@ -108,7 +111,7 @@ public class Skeleton {
     public Skeleton(int neck1, int neck2, int neck3, int shoulder1, int shoulder2, int shoulder3,
                     int shoulder4, int trunk1, int trunk2, int trunk3, int elbow1, int elbow2,
                     int weight, int height, int box, String title, String description, Date date){
-
+        this.mId = UUID.randomUUID();
         this.mTitle = title;
         this.mDescription = description;
         this.mDate = date;
@@ -160,6 +163,9 @@ public class Skeleton {
         return mJoints;
     }
 
+    public UUID getId() {
+        return mId;
+    }
     public void setTitle(String title){
         this.mTitle = title;
     }
@@ -257,10 +263,6 @@ public class Skeleton {
         //convert to 1.8m skeleton
         float scale = userHeight/1.8f;
 
-       /* Log.d("test", "userWeight " + userWeight);
-//        Log.d("test","userHeight "+userHeight);
-        Log.d("test","boxWeight "+boxWeight);*/
-
         SkeletonPose pose = skel.get(0).getSkeletonPose();
 
         SimpleVector pelvisTranslation = pose.getGlobal(PELVIS_JOINT).getTranslation();
@@ -306,99 +308,5 @@ public class Skeleton {
         Log.d("moment","totalFlextion   " + 0.083f*Math.pow(flextionMoment, 2));
         Log.d("moment","totalFlextion   " + - 0.0001f*Math.pow(flextionMoment, 3));
         Log.d("moment","totalBending   "+bendingMoment);*/
-    }
-
-
-    public class JointAngle {
-        int id;
-        int angle;
-        int prevAngle;
-        int minAngle;
-        int maxAngle;
-        Matrix rotation;
-        SimpleVector positivePoseDirection;
-        SimpleVector negativePoseDirection;
-
-        public JointAngle(int id, int minAngle, int maxAngle, SimpleVector positivePoseDirection, SimpleVector negativePoseDirection, Matrix rotation) {
-            this.id = id;
-            this.angle = 0;
-            this.prevAngle = 0;
-            this.minAngle = minAngle;
-            this.maxAngle = maxAngle;
-            this.rotation = rotation;
-            this.positivePoseDirection = positivePoseDirection;
-            this.negativePoseDirection = negativePoseDirection;
-        }
-
-        public JointAngle(int id, int angle, int minAngle, int maxAngle, SimpleVector positivePoseDirection, SimpleVector negativePoseDirection, Matrix rotation) {
-            this.id = id;
-            this.angle = angle;
-            this.prevAngle = 0;
-            this.minAngle = minAngle;
-            this.maxAngle = maxAngle;
-            this.rotation = rotation;
-            this.positivePoseDirection = positivePoseDirection;
-            this.negativePoseDirection = negativePoseDirection;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public int getAngle() {
-            return angle;
-        }
-
-        public void setAngle(int angle) {
-            this.angle = angle;
-        }
-
-        public int getPrevAngle() {
-            return prevAngle;
-        }
-
-        public void updatePrevAngle() {
-            this.prevAngle = this.angle;
-        }
-
-        public int getMinAngle() {
-            return minAngle;
-        }
-
-        public void setMinAngle(int minAngle) {
-            this.minAngle = minAngle;
-        }
-
-        public int getMaxAngle() {
-            return maxAngle;
-        }
-
-        public void setMaxAngle(int maxAngle) {
-            this.maxAngle = maxAngle;
-        }
-
-        public Matrix getRotation() {
-            return rotation;
-        }
-
-        public void setRotation(Matrix rotation) {
-            this.rotation = rotation;
-        }
-
-        public int getMidAngle(){
-            return maxAngle - minAngle;
-        }
-
-        public SimpleVector getNegativePoseDirection() {
-            return negativePoseDirection;
-        }
-
-        public SimpleVector getPositivePoseDirection() {
-            return positivePoseDirection;
-        }
     }
 }
