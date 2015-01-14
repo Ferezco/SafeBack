@@ -4,9 +4,12 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -22,19 +25,11 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".View.Training.TrainingPagerActivity"
-            android:parentActivityName=".View.NavigationActivity">
-        </activity>
         <activity
-            android:name=".View.Training.SingleImageActivity"
-            android:label="@string/title_activity_single_image"
-            android:theme="@style/ImageActionBar">
+            android:name=".View.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".View.NavigationActivity" >
         </activity>
-        <activity android:name=".View.Article.ArticleActivity"
-            android:label="@string/titile_article_activity"
-            android:parentActivityName = ".View.NavigationActivity">
-            </activity>
-            android:parentActivityName = ".View.NavigationActivity"
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-package com.tri.felipe.safeback.View.Skeleton;
+package com.tri.felipe.safeback.View;
 import android.app.Activity;
 import android.app.Fragment;
 import android.content.Intent;

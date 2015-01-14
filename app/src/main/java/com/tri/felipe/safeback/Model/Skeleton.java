@@ -58,11 +58,7 @@ public class Skeleton {
     public static final float UPPER_TRUNK_SEGMENT_WEIGHT = 15.96f/100f;//0.497f;
     public static final float UPPER_TRUNK_MASS_CENTER = 1-50.66f/100f;//0.50f;
 
-    public static final float MID_TRUNK_SEGMENT_WEIGHT = 16.38f/100f;//0.497f;
-    public static final float MID_TRUNK_MASS_CENTER = 1-45.02f/100f;//0.50f;
-
     public static final float HAND_SEGMENT_WEIGHT = 0.006f;
-    public static final float HAND_MASS_CENTER = 1-63.09f/100f;
 
 
     public Skeleton(){
@@ -177,28 +173,33 @@ public class Skeleton {
         this.mDescription = description;
     }
 
-    public String getDescription(){
-        return mDescription;
+    public int getUserStat(int index){
+        if(index == 0)
+            return mWeight;
+        else if (index == 1)
+            return mHeight;
+        else
+            return mBox;
+    }
+    public void setUserStat(int value, int index){
+        if(index == 0)
+            this.mWeight = value;
+        else if (index == 1)
+            this.mHeight = value;
+        else
+            this.mBox = value;
     }
 
-    public void setWeight(int weight){
-        this.mWeight = weight;
+    public String getDescription(){
+        return mDescription;
     }
 
     public int getWeight(){
         return mWeight;
     }
 
-    public void setHeight(int height){
-        this.mHeight = height;
-    }
-
     public int getHeight(){
         return mHeight;
-    }
-
-    public void setBoxWeight(int box){
-        this.mBox = box;
     }
 
     public int getBoxWeight(){
@@ -289,7 +290,6 @@ public class Skeleton {
         handRTranslation.scalarMul(scale);
 
         float[] upperTrunkMoment = calculateMoment(chestTranslation, neckTranslation, pelvisTranslation, mWeight, UPPER_TRUNK_MASS_CENTER, UPPER_TRUNK_SEGMENT_WEIGHT);
-        float[] midTrunkMoment = calculateMoment(trunkTranslation, chestTranslation, pelvisTranslation, mWeight, MID_TRUNK_MASS_CENTER, MID_TRUNK_SEGMENT_WEIGHT);
         float[] headMoment = calculateMoment(neckTranslation,headTopTranslation, pelvisTranslation, mWeight, HEAD_MASS_CENTER, HEAD_SEGMENT_WEIGHT);
 
         float[] upperarmLMoment = calculateMoment(shoulderLTranslation, elbowLTranslation, pelvisTranslation, mWeight, UPPERARM_MASS_CENTER, UPPERARM_SEGMENT_WEIGHT);
@@ -300,7 +300,6 @@ public class Skeleton {
         float[] boxRMoment = calculateBoxMoment(handRTranslation, pelvisTranslation, mWeight, mBox);
 
         float flextionMoment = upperTrunkMoment[0]+upperTrunkMoment[0]+upperarmLMoment[0]+ upperarmRMoment[0]+ forearmLMoment[0] + forearmRMoment[0]+boxLMoment[0]+boxRMoment[0]+headMoment[0];
-        float bendingMoment = midTrunkMoment[1]+midTrunkMoment[1]+upperarmLMoment[1]+ upperarmRMoment[1]+ forearmLMoment[1] + forearmRMoment[1]+boxLMoment[1]+boxRMoment[1]+headMoment[1];
 
         return (float)(1067.6f + 1.219f * flextionMoment + 0.083f * Math.pow(flextionMoment, 2) - 0.0001f * Math.pow(flextionMoment, 3));
         /*Log.d("test","totalForce   "+totalForce);

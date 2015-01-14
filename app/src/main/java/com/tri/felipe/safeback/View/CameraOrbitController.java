@@ -1,4 +1,4 @@
-package com.tri.felipe.safeback.View.Skeleton;
+package com.tri.felipe.safeback.View;
 
 import com.threed.jpct.Camera;
 import com.threed.jpct.SimpleVector;

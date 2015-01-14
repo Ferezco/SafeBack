@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="joint_control_panel_entries">
+        <item>Neck</item>
+        <item>Shoulder</item>
+        <item>Trunk</item>
+        <item>Elbow</item>
+    </string-array>
+
+    <string-array name="drawer_label">
+        <item>Home</item>
+        <item>Acknowledgements</item>
+        <item>About Us</item>
+        <item>Settings</item>
+    </string-array>
+
+    <string-array name="unitTypeEntries">
+        <item name="Metric">Metric</item>
+        <item name="Imperial">Imperial</item>
+    </string-array>
+
+    <array name="unitTypeValues">
+        <item name="Metric">Metric</item>
+        <item name="Imperial">Imperial</item>
+    </array>
+</resources>

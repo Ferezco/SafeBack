@@ -10,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 /**
@@ -21,20 +22,16 @@ public class SkeletonController {
     private Context appContext;
     private static String SAVEFILE = "skeleton_records.txt";
 
-    private SkeletonController(Context appContext) {
-        mSkeletons = new ArrayList<Skeleton>();
+    private SkeletonController() {
+        mSkeletons = new ArrayList<>();
     }
 
     public static SkeletonController get(Context c) {
         if (sSkeletonController == null) {
-            sSkeletonController = new SkeletonController(c.getApplicationContext());
+            sSkeletonController = new SkeletonController();
         }
         sSkeletonController.appContext = c;
         return sSkeletonController;
-    }
-
-    public SkeletonController(){
-        this.mSkeletons = new ArrayList<Skeleton>();
     }
 
     public ArrayList<Skeleton> getSkeletons(){
@@ -60,18 +57,17 @@ public class SkeletonController {
     /**
      * Deletes previously written storage files, then recreates and writes
      * to them all of the current saved Skeletons
-     * @throws IOException
      */
-    public void saveAllSkeletons() throws IOException {
+    public void saveAllSkeletons() {
         FileOutputStream skeleton_records;
-        appContext.deleteFile("visit_records.txt");
-        skeleton_records = appContext.openFileOutput(SAVEFILE, appContext.MODE_PRIVATE);
+        appContext.deleteFile(SAVEFILE);
+        try {
+            skeleton_records = appContext.openFileOutput(SAVEFILE, appContext.MODE_PRIVATE);
         OutputStreamWriter skeletons = new OutputStreamWriter(skeleton_records);
 
         for (Skeleton s: mSkeletons){
-            //Format UUID, Title, Description, neck*3, Shoulder *4, Trunk *3, Elbow * 2
-            String data = String.format("%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
-                    s.getId().toString(),s.getTitle(), s.getDescription(),
+            //Format neck*3, Shoulder *4, Trunk *3, Elbow * 2, Title, Description, Time
+            String data = String.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%s,%d\n",
                     s.getJoints().get(0).get(0).getAngle(),
                     s.getJoints().get(0).get(1).getAngle(),
                     s.getJoints().get(0).get(2).getAngle(),
@@ -83,11 +79,15 @@ public class SkeletonController {
                     s.getJoints().get(2).get(1).getAngle(),
                     s.getJoints().get(2).get(2).getAngle(),
                     s.getJoints().get(3).get(0).getAngle(),
-                    s.getJoints().get(3).get(1).getAngle());
+                    s.getJoints().get(3).get(1).getAngle(), s.getWeight(), s.getHeight(),
+                    s.getBoxWeight(), s.getTitle(), s.getDescription(), s.getDate().getTime() );
             Log.d("SkeletonController", data);
             skeletons.write(data);
         }
-        skeletons.close();
+            skeletons.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void loadAllSkeletons() throws IOException{
@@ -98,16 +98,23 @@ public class SkeletonController {
             Log.d("SkeletonController", "completed reading from dynamic");
             while (scanner.hasNextLine()){
                 reader = scanner.nextLine().split(",");
-                Log.d("dynamic", reader[1]);
+                Log.d("dynamic", reader[0]);
                 this.createSkeleton(reader);
             }
-
             scanner.close();
         } catch (FileNotFoundException e) {
+            Log.d("Exception", "FileNotFound");
         }
     }
 
-    private void createSkeleton(String[] line) {
-        Skeleton s = new Skeleton();
+    private void createSkeleton(String[] l) {
+        int[] values = new int[15];
+        for (int i = 0; i < 15; i++ ){
+            values[i] = Integer.parseInt(l[0]);
+        }
+        Skeleton s = new Skeleton(values[0], values[1], values[2], values[3], values[4], values[5],
+                values[6], values[7], values[8], values[9], values[10], values[11], values[12],
+                values[13], values[14], l[15], l[16], new Date(Long.parseLong(l[17])));
+        mSkeletons.add(s);
     }
 }

@@ -1,88 +1,29 @@
 package com.tri.felipe.safeback.View;
 
 import android.app.Activity;
-import android.app.ActionBar;
 import android.app.FragmentManager;
 import android.os.Bundle;
-import android.util.Log;
-import android.support.v4.widget.DrawerLayout;
+import android.preference.PreferenceManager;
 
 import com.tri.felipe.safeback.R;
-import com.tri.felipe.safeback.View.Skeleton.SkeletonFragment;
 
 
-public class NavigationActivity extends Activity
-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+public class NavigationActivity extends Activity {
 
     /**
      * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
      */
-    private NavigationDrawerFragment mNavigationDrawerFragment;
-
-    /**
-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
-     */
-    private CharSequence mTitle;
+    private SkeletonFragment sf = new SkeletonFragment();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_navigation);
-
-        mNavigationDrawerFragment = (NavigationDrawerFragment)
-                getFragmentManager().findFragmentById(R.id.navigation_drawer);
-        mTitle = getTitle();
-
-        // Set up the drawer.
-        mNavigationDrawerFragment.setUp(
-                R.id.navigation_drawer,
-                (DrawerLayout) findViewById(R.id.drawer_layout));
-    }
-
-    @Override
-    public void onNavigationDrawerItemSelected(int position) {
-        // update the main content by replacing fragments
         FragmentManager fragmentManager = getFragmentManager();
-        Log.d("position clicked", Integer.toString(position));
-        switch (position) {
-            case 0:
-                fragmentManager.beginTransaction()
-                        .replace(R.id.container, new SkeletonFragment())
-                        .commit();
-                break;
-            case 1:
-                fragmentManager.beginTransaction()
-                        .replace(R.id.container, new AcknowledgementFragment())
-                        .commit();
-                break;
-            case 2:
-                fragmentManager.beginTransaction()
-                        .replace(R.id.container, new SettingsFragment())
-                        .commit();
-                break;
-            default:
-                break;
-        }
-    }
 
-    public void onSectionAttached(int number) {
-        switch (number) {
-            case 1:
-                mTitle = getString(R.string.title_section1);
-                break;
-            case 2:
-                mTitle = getString(R.string.title_section2);
-                break;
-            case 3:
-                mTitle = getString(R.string.title_section3);
-                break;
-        }
-    }
-
-    public void restoreActionBar() {
-        ActionBar actionBar = getActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setTitle(mTitle);
+        fragmentManager.beginTransaction()
+                .replace(R.id.container, sf)
+                .commit();
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }
 }

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <ListPreference
+        android:key="prefUnitType"
+        android:title="@string/pref_unit_type"
+        android:summary="@string/pref_unit_type_summary"
+        android:entries="@array/unitTypeEntries"
+        android:entryValues="@array/unitTypeValues"
+        android:defaultValue="Metric"/>
+
+    <PreferenceCategory
+        android:title="Acknowledgement"
+        android:key="pref_key_storage_settings">
+
+        <Preference
+            android:key="tilak"
+            android:title="Tilak Dutta"
+            android:summary="Scientist and Technology Team Leader"/>
+        <Preference
+            android:key="tara"
+            android:title="Tara Kajaks"
+            android:summary="Post-Doctoral Fellow"/>
+        <Preference
+            android:key="felipe"
+            android:title="Felipe Orozco"
+            android:summary="Developer"/>
+    </PreferenceCategory>
+
+    <!--<PreferenceCategory
+        android:title="Legal"
+        android:key="legal">
+        <Preference
+            android:title="Distribution License"
+            android:key="legalLicense">
+
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="com.tri.felipe.safeback"
+                android:targetClass="com.tri.felipe.safeback.View.LegalActivity"/>
+        </Preference>
+    </PreferenceCategory>-->
+
+</PreferenceScreen>

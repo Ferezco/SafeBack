@@ -9,7 +9,6 @@
     <RelativeLayout
         android:layout_width="fill_parent"
         android:layout_height="fill_parent"
-        android:background="@drawable/skeleton"
         >
 
         <RelativeLayout
@@ -40,20 +39,21 @@
             android:layout_alignParentBottom="true"
             android:orientation="vertical"
             android:paddingLeft="16dp"
-            android:paddingTop="8dp"
             android:paddingRight="16dp"
             android:paddingBottom="60dp"
             android:elevation="2dp">
 
-            <Spinner
+            <Button
                 android:id="@+id/skeleton_joint_spinner"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentLeft="true"
-                android:entries="@array/joint_control_panel_entries"
-                android:layout_marginBottom="16dp"/>
+                android:layout_marginTop="0dp"
+                android:background="@android:color/transparent"/>
 
+
+            <!--android:entries="@array/joint_control_panel_entries"-->
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
@@ -347,6 +347,6 @@
         android:layout_width="360dp"
         android:layout_height="match_parent"
         android:layout_gravity="end"
-        android:name="com.tri.felipe.safeback.View.Skeleton.ImageDrawerFragment"
+        android:name="com.tri.felipe.safeback.View.ImageDrawerFragment"
         tools:layout="@layout/fragment_image_drawer"/>
 </android.support.v4.widget.DrawerLayout>
