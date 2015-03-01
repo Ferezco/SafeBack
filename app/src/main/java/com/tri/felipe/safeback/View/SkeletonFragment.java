@@ -23,19 +23,18 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
-
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.threed.jpct.Config;
 import com.threed.jpct.FrameBuffer;
 import com.threed.jpct.Light;
@@ -46,8 +45,8 @@ import com.threed.jpct.Texture;
 import com.threed.jpct.TextureManager;
 import com.threed.jpct.World;
 import com.tri.felipe.safeback.Controller.SkeletonController;
-import com.tri.felipe.safeback.Model.Skeleton;
 import com.tri.felipe.safeback.Model.JointAngle;
+import com.tri.felipe.safeback.Model.Skeleton;
 import com.tri.felipe.safeback.R;
 
 import java.io.IOException;
@@ -69,20 +68,23 @@ import raft.jpct.bones.SkeletonPose;
 
 public class SkeletonFragment extends Fragment {//implements SharedPreferences.OnSharedPreferenceChangeListener {
 
+    static final int PICK_SKELETON_REQUEST = 1;
+    static final String LOAD = "LOAD_SAVED";
+    private static final int GRANULARITY = 25;
+    private static String KEY_PREF_UNIT_TYPE = "prefUnitType";
+    private static String IS_METRIC = "Metric";
+    private static int[] MAX_STAT = {150, 200};
+    private final MyRenderer mRenderer = new MyRenderer();
     private SkeletonController control;
-
     //3D Skeleton
     private GLSurfaceView mGLView;
-    private final MyRenderer mRenderer = new MyRenderer();
     private World world = null;
     private CameraOrbitController cameraController;
     private AnimatedGroup skeleton = null;
     private long frameTime = System.currentTimeMillis();
     private long aggregatedTime = 0;
-    private static final int GRANULARITY = 25;
     private FrameBuffer frameBuffer = null;
     private int FRONT_VIEW = 0;
-
     //Views
     private Button mJoint;
     private TextView mBottomText;
@@ -99,7 +101,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private ArrayList<TextView> mUserText;
     private ArrayList<SeekBar> mUserSeek;
     private ArrayList<EditText> mUserEdit;
-
     //if user panel is expanded or not
     private boolean USER_EXPANDED = false;
     //true: Metric, false: Imperial
@@ -108,10 +109,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private int CURRENT_JOINT = 0;
     private int NUM_JOINTS = 4;
     private float FORCE;
-
-    private static String KEY_PREF_UNIT_TYPE = "prefUnitType";
-    private static String IS_METRIC = "Metric";
-
     private Skeleton mSkeleton;
     private ArrayList<JointAngle> mCurrentJoint;
     private ArrayList<Skeleton> mSkeletons;
@@ -122,13 +119,8 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                     "L Shoulder  Extension", "R Shoulder Extenson"},
                     {"Trunk Rotation", "Trunk Lateral Bending", "Trunk Extension"},
                     {"L Elbow Extension", "R Elbow Extension"}};
-
     private String[] USER_TRAITS = {"User Weight: ", "User Height: ", "Item Weight: "};
     private String[][] UNITS = {{"lbs", "kg"}, {"Inches", "cm"}, {"lbs", "kg"}};
-    private static int[] MAX_STAT = {150, 200};
-
-    static final int PICK_SKELETON_REQUEST = 1;
-    static final String LOAD = "LOAD_SAVED";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -194,6 +186,8 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         world.setAmbientLight(250, 250, 250);
         world.buildAllObjects();
 
+        //mGLView.setBackgroundDrawable(getResources().getDrawable(R.drawable.tri_splash));
+
         float[] boundingBox = mRenderer.calcBoundingBox();
         float height = (boundingBox[3]); // ninja height
         new Light(world).setPosition(new SimpleVector(0, -height/2, height));
@@ -212,9 +206,15 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         mTotalForce.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
-                Toast.makeText(getActivity(),
-                        String.format("%.0f N is being applied to the lower back", FORCE),
-                        Toast.LENGTH_SHORT).show();
+                if (METRIC) {
+                    Toast.makeText(getActivity(),
+                            String.format("%.0f Kgs of force are being applied to the lower back", FORCE * 0.10197),
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getActivity(),
+                            String.format("%.0f Lbs of force are being applied to the lower back", FORCE * 0.22481),
+                            Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
         });
@@ -469,24 +469,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         setForce();
     }
 
-    private void logSkeletonStatus() {
-        Log.d("Skeleton", String.format("Neck %d %d %d, Shoulder %d %d %d %d, Trunk %d %d %d, Elbow %d %d, User %d %d %d",
-                mSkeleton.getJoints().get(0).get(0).getAngle(),
-                mSkeleton.getJoints().get(0).get(1).getAngle(),
-                mSkeleton.getJoints().get(0).get(2).getAngle(),
-                mSkeleton.getJoints().get(1).get(0).getAngle(),
-                mSkeleton.getJoints().get(1).get(1).getAngle(),
-                mSkeleton.getJoints().get(1).get(2).getAngle(),
-                mSkeleton.getJoints().get(1).get(3).getAngle(),
-                mSkeleton.getJoints().get(2).get(0).getAngle(),
-                mSkeleton.getJoints().get(2).get(1).getAngle(),
-                mSkeleton.getJoints().get(2).get(2).getAngle(),
-                mSkeleton.getJoints().get(3).get(0).getAngle(),
-                mSkeleton.getJoints().get(3).get(1).getAngle(),
-                mSkeleton.getWeight(), mSkeleton.getHeight(),
-                mSkeleton.getBoxWeight()));
-    }
-
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         super.onCreateOptionsMenu(menu, inflater);
@@ -499,7 +481,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         View view1;
         switch (item.getItemId()) {
             case R.id.action_save:
-                view1 = factory.inflate(R.layout.dialog_save_skeleton, null);
+                view1 = factory.inflate(R.layout.fragment_skeleton_save_dialog, null);
                 mSkeletonName = (EditText) view1.findViewById(R.id.skeleton_name_editText);
                 mSkeletonDescription = (EditText) view1.findViewById(R.id.skeleton_description_editText);
                 SkeletonDialog = new AlertDialog.Builder(getActivity())
@@ -554,19 +536,15 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         if (requestCode == PICK_SKELETON_REQUEST){
             if (resultCode == Activity.RESULT_OK) {
                 UUID id = (UUID) data.getSerializableExtra(LOAD);
-                if (id != null)
-                    Log.d("Load", "Loaded successfully");
                 mSkeleton = control.getSkeletonByID(id).copy();
-                applyAllRotations();
-                updateSkeletonControls();
-                updateUserControls();
-            }
-            else{
+                Log.d("skeleton", id.toString());
+                Log.d("skeleton", mSkeleton.getTitle());
+            } else {
                 mSkeleton = new Skeleton();
-                applyAllRotations();
-                updateSkeletonControls();
-                updateUserControls();
             }
+            applyAllRotations();
+            updateSkeletonControls();
+            updateUserControls();
         }
     }
 
@@ -597,7 +575,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
 
     private void updateUserControls(){
         for (int i = 0; i < 3; i++){
-            mUserText.get(i).setText(USER_TRAITS[i] + UNITS[i][METRIC? 1 : 0]);
+            mUserText.get(i).setText(USER_TRAITS[i] + UNITS[i][METRIC ? 1 : 0]);
             mUserSeek.get(i).setProgress(mSkeleton.getUserStat(i));
             if (METRIC) {
                 mUserEdit.get(i).setText(Integer.toString((mSkeleton.getUserStat(i))));
@@ -618,15 +596,15 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         for(int i = 0; i < NUM_JOINTS; i++){
             if ((CURRENT_JOINT == 1) || ((CURRENT_JOINT == 0 || CURRENT_JOINT == 2) && i < 3)
                     || (CURRENT_JOINT == 3 && i < 2)) {
-                Log.d("Testing", Integer.toString(i));
+                //Log.d("Testing", Integer.toString(i));
                 mTraitTexts.get(i).setText(TRAITS[CURRENT_JOINT][i]);
-                logSkeletonStatus();
+                //logSkeletonStatus();
                 mSeekBars.get(i).setProgress(mCurrentJoint.get(i).getAngle() -
                         mCurrentJoint.get(i).getMinAngle());
-                logSkeletonStatus();
+                //logSkeletonStatus();
                 mSeekBars.get(i).setMax(mCurrentJoint.get(i).getMidAngle());
                 mCountTexts.get(i).setText(Integer.toString(mCurrentJoint.get(i).getAngle()));
-                logSkeletonStatus();
+                //logSkeletonStatus();
             }
             else {
                 mTraitTexts.get(i).setVisibility(View.INVISIBLE);

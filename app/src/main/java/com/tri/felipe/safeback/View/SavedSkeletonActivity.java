@@ -1,8 +1,5 @@
 package com.tri.felipe.safeback.View;
 
-import java.util.ArrayList;
-import java.util.UUID;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -20,6 +17,9 @@ import android.widget.Toast;
 import com.tri.felipe.safeback.Controller.SkeletonController;
 import com.tri.felipe.safeback.Model.Skeleton;
 import com.tri.felipe.safeback.R;
+
+import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * Created by Felipe on 15-03-01.
@@ -49,6 +49,7 @@ public class SavedSkeletonActivity extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 UUID sid = mSkeletons.get(position).getId();
+                SkeletonController.get(mContext).logSkeletonStatus("Saved Skeleton", mSkeletons.get(position));
                 Intent intent = new Intent();
                 intent.putExtra(SkeletonFragment.LOAD, sid);
                 setResult(Activity.RESULT_OK, intent);
@@ -74,6 +75,7 @@ public class SavedSkeletonActivity extends Activity {
                     Log.d("Current List", s.getTitle());
                 }
                 mAdapter.notifyDataSetChanged();
+                SkeletonController.get(mContext).saveAllSkeletons();
                 Toast.makeText(mContext, "Deleted!", Toast.LENGTH_SHORT).show();
             }
         });

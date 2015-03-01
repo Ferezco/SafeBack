@@ -18,10 +18,10 @@ import java.util.UUID;
  * Created by Felipe on 14-11-23.
  */
 public class SkeletonController {
-    private ArrayList<Skeleton> mSkeletons;
     private static SkeletonController sSkeletonController;
-    private Context appContext;
     private static String SAVEFILE = "skeleton_records.txt";
+    private ArrayList<Skeleton> mSkeletons;
+    private Context appContext;
 
     private SkeletonController() {
         mSkeletons = new ArrayList<>();
@@ -91,6 +91,24 @@ public class SkeletonController {
         }
     }
 
+    public void logSkeletonStatus(String source, Skeleton mSkeleton) {
+        Log.d(source, String.format("Neck %d %d %d, Shoulder %d %d %d %d, Trunk %d %d %d, Elbow %d %d, User %d %d %d",
+                mSkeleton.getJoints().get(0).get(0).getAngle(),
+                mSkeleton.getJoints().get(0).get(1).getAngle(),
+                mSkeleton.getJoints().get(0).get(2).getAngle(),
+                mSkeleton.getJoints().get(1).get(0).getAngle(),
+                mSkeleton.getJoints().get(1).get(1).getAngle(),
+                mSkeleton.getJoints().get(1).get(2).getAngle(),
+                mSkeleton.getJoints().get(1).get(3).getAngle(),
+                mSkeleton.getJoints().get(2).get(0).getAngle(),
+                mSkeleton.getJoints().get(2).get(1).getAngle(),
+                mSkeleton.getJoints().get(2).get(2).getAngle(),
+                mSkeleton.getJoints().get(3).get(0).getAngle(),
+                mSkeleton.getJoints().get(3).get(1).getAngle(),
+                mSkeleton.getWeight(), mSkeleton.getHeight(),
+                mSkeleton.getBoxWeight()));
+    }
+
     public void loadAllSkeletons() throws IOException{
         String[] reader;
         Scanner scanner;
@@ -98,9 +116,10 @@ public class SkeletonController {
             scanner = new Scanner(appContext.openFileInput(SAVEFILE));
             Log.d("SkeletonController", "completed reading from dynamic");
             while (scanner.hasNextLine()){
-                reader = scanner.nextLine().split(",");
-                Log.d("dynamic", reader[0]);
-                this.createSkeleton(reader);
+                String r = scanner.nextLine();
+                reader = r.split(",");
+                Log.d("dynamic", r);
+                createSkeleton(reader);
             }
             scanner.close();
         } catch (FileNotFoundException e) {
@@ -111,11 +130,12 @@ public class SkeletonController {
     private void createSkeleton(String[] l) {
         int[] values = new int[15];
         for (int i = 0; i < 15; i++ ){
-            values[i] = Integer.parseInt(l[0]);
+            values[i] = Integer.parseInt(l[i]);
         }
         Skeleton s = new Skeleton(values[0], values[1], values[2], values[3], values[4], values[5],
                 values[6], values[7], values[8], values[9], values[10], values[11], values[12],
                 values[13], values[14], l[15], l[16], new Date(Long.parseLong(l[17])));
+        logSkeletonStatus("Create Skeleton", s);
         mSkeletons.add(s);
     }
 
