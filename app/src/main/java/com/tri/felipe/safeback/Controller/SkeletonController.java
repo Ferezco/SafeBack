@@ -12,6 +12,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Scanner;
+import java.util.UUID;
 
 /**
  * Created by Felipe on 14-11-23.
@@ -116,5 +117,14 @@ public class SkeletonController {
                 values[6], values[7], values[8], values[9], values[10], values[11], values[12],
                 values[13], values[14], l[15], l[16], new Date(Long.parseLong(l[17])));
         mSkeletons.add(s);
+    }
+
+    public Skeleton getSkeletonByID(UUID id){
+        for(Skeleton s : mSkeletons){
+            if (s.getId().equals(id)) {
+                return s;
+            }
+        }
+        return null;
     }
 }

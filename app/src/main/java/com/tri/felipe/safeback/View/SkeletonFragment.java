@@ -2,6 +2,7 @@ package com.tri.felipe.safeback.View;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.DialogInterface;
@@ -25,8 +26,6 @@ import android.view.View.OnClickListener;
 
 import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -54,6 +53,7 @@ import com.tri.felipe.safeback.R;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
@@ -65,6 +65,7 @@ import raft.jpct.bones.AnimatedGroup;
 import raft.jpct.bones.BonesIO;
 import raft.jpct.bones.Quaternion;
 import raft.jpct.bones.SkeletonPose;
+
 
 public class SkeletonFragment extends Fragment {//implements SharedPreferences.OnSharedPreferenceChangeListener {
 
@@ -90,7 +91,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private EditText mSkeletonName;
     private EditText mSkeletonDescription;
     private AlertDialog.Builder SkeletonDialog;
-    private ListView mSkeletonList;
     private TextView mTotalForce;
     private RelativeLayout mSkeletonLayout;
     private ArrayList<TextView> mTraitTexts;
@@ -126,6 +126,9 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private String[] USER_TRAITS = {"User Weight: ", "User Height: ", "Item Weight: "};
     private String[][] UNITS = {{"lbs", "kg"}, {"Inches", "cm"}, {"lbs", "kg"}};
     private static int[] MAX_STAT = {150, 200};
+
+    static final int PICK_SKELETON_REQUEST = 1;
+    static final String LOAD = "LOAD_SAVED";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -238,21 +241,8 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 ShowAllSlider();
                 updateSkeletonControls();
             }
-        });/*
-        mJoint.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+        });
 
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                CURRENT_JOINT = position;
-                ShowAllSlider();
-                updateSkeletonControls();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });*/
 
         /*
          * Captures all touch events so that they don't go through the expanded user
@@ -373,19 +363,18 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     int i = 0;
                     while (!seekBar.equals(mUserSeek.get(i)))
-                            i++;
+                        i++;
                     mSkeleton.setUserStat(progress, i);
-                    if (METRIC){
+                    if (METRIC) {
                         mUserEdit.get(i).setText(Integer.toString(
                                 Math.min(progress, MAX_STAT[i % 2])));
-                    }
-                    else{
+                    } else {
                         if (i % 2 == 1)
                             mUserEdit.get(i).setText((Integer.toString(control.
                                     CmToInch(Math.min(progress, MAX_STAT[i % 2])))));
                         else
-                        mUserEdit.get(i).setText(Integer.toString(control.
-                                KiloToPound(Math.min(progress, MAX_STAT[i % 2]))));
+                            mUserEdit.get(i).setText(Integer.toString(control.
+                                    KiloToPound(Math.min(progress, MAX_STAT[i % 2]))));
                     }
                 }
 
@@ -521,12 +510,13 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                             public void onClick(DialogInterface dialog, int which) {
                                 if (!mSkeletonName.getText().toString().isEmpty() &&
                                         !mSkeletonDescription.getText().toString().isEmpty()) {
-                                    mSkeleton.setTitle(mSkeletonName.getText().toString());
-                                    mSkeleton.setDescription(mSkeletonDescription.getText().toString());
-                                    mSkeleton.setDate(new Date());
-                                    mSkeletons.add(mSkeleton);
+                                    Skeleton s = mSkeleton.copy();
+                                    s.setTitle(mSkeletonName.getText().toString());
+                                    s.setDescription(mSkeletonDescription.getText().toString());
+                                    s.setDate(new Date());
+                                    mSkeletons.add(s);
                                     control.get(getActivity()).saveAllSkeletons();
-                                    mSkeleton = mSkeleton.copy();
+                                    Toast.makeText(getActivity(), "Saved!", Toast.LENGTH_SHORT).show();
                                 }
                                 else
                                     Toast.makeText(getActivity(), "Missing title or description", Toast.LENGTH_SHORT).show();
@@ -546,32 +536,8 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 startActivity(intent);
                 break;
             case R.id.action_load_skeleton:
-                mSkeletonList = (ListView) factory.inflate(R.layout.dialog_load_skeleton, null);
-                mSkeletonList.setOnItemClickListener( new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        Skeleton s = (Skeleton) mSkeletonList.getAdapter().getItem(position);
-                        mSkeleton = s.copy();
-                        applyAllRotations();
-                        updateSkeletonControls();
-                        updateUserControls();
-                    }
-                });
-                if (mSkeletons.size() == 0){
-                    new LoadAllSkeletons().execute();
-                }
-                SkeletonAdapter adapter = new SkeletonAdapter(mSkeletons);
-                mSkeletonList.setAdapter(adapter);
-                SkeletonDialog = new AlertDialog.Builder(getActivity()).setView(mSkeletonList)
-                        .setTitle("Select a Skeleton").setNegativeButton("Load", null);
-
-                AlertDialog loadDialog = SkeletonDialog.show();
-                if (Build.VERSION.SDK_INT < 21) {
-                    int titleDividerId = getResources().getIdentifier("titleDivider", "id", "android");
-                    View titleDivider = loadDialog.findViewById(titleDividerId);
-                    if (titleDivider != null)
-                        titleDivider.setBackgroundColor(Color.parseColor("#036bac"));
-                }
+                Intent loadSkeletonIntent = new Intent(getActivity(), SavedSkeletonActivity.class);
+                startActivityForResult(loadSkeletonIntent, PICK_SKELETON_REQUEST);
                 break;
             case R.id.reset_skeleton:
                 mSkeleton = new Skeleton();
@@ -580,6 +546,28 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 updateUserControls();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_SKELETON_REQUEST){
+            if (resultCode == Activity.RESULT_OK) {
+                UUID id = (UUID) data.getSerializableExtra(LOAD);
+                if (id != null)
+                    Log.d("Load", "Loaded successfully");
+                mSkeleton = control.getSkeletonByID(id).copy();
+                applyAllRotations();
+                updateSkeletonControls();
+                updateUserControls();
+            }
+            else{
+                mSkeleton = new Skeleton();
+                applyAllRotations();
+                updateSkeletonControls();
+                updateUserControls();
+            }
+        }
     }
 
     private boolean getUnitType(){
@@ -731,11 +719,11 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         FORCE = mSkeleton.calculateForce(skeleton);
         if (FORCE < 3400){
             mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            mTotalForce.setText("Ok");
+            mTotalForce.setText("Load is Safe");
         }
         else{
             mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-            mTotalForce.setText("Too Heavy");
+            mTotalForce.setText("Load is Unsafe");
         }
     }
 
@@ -744,36 +732,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         super.onResume();
         METRIC = getUnitType();
         updateUserControls();
-    }
-
-    private class SkeletonAdapter extends ArrayAdapter<Skeleton> {
-        public SkeletonAdapter(ArrayList<Skeleton> skeletons) {
-            super(getActivity(), 0, skeletons);
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null) {
-                convertView = getActivity().getLayoutInflater()
-                        .inflate(R.layout.list_item_skeleton, null);
-            }
-            Skeleton s = getItem(position);
-
-            TextView titleTextView =
-                    (TextView) convertView.findViewById(R.id.skeleton_list_item_titleTextView);
-            titleTextView.setText(s.getTitle());
-
-            TextView descriptionTextView =
-                    (TextView) convertView.findViewById(R.id.skeleton_list_item_descriptionTextView);
-            if(s.getDescription().length() < 40){
-                descriptionTextView.setText(s.getDescription());
-            }
-            else {
-                descriptionTextView.setText(s.getDescription().substring(0, 40) + "...");
-            }
-
-            return convertView;
-        }
     }
 
     class LoadAllSkeletons extends AsyncTask<String, String, Void> {
