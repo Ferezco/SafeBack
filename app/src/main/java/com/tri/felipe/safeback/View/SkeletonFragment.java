@@ -128,6 +128,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         control = SkeletonController.get(getActivity());
         mSkeletons = control.get(getActivity()).getSkeletons();
         new LoadAllSkeletons().execute();
+        Log.d("Skeletons loaded", Integer.toString(mSkeletons.size()));
         mSkeleton = new Skeleton();
         setHasOptionsMenu(true);
         METRIC = getUnitType();
@@ -243,7 +244,6 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
             }
         });
 
-
         /*
          * Captures all touch events so that they don't go through the expanded user
          * panel or skeleton panel
@@ -335,7 +335,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 }
             }
         });
-        setForce();
+        CalculateForce();
         return rootView;
     }
 
@@ -385,7 +385,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
 
                 @Override
                 public void onStopTrackingTouch(SeekBar seekBar) {
-                    setForce();
+                    CalculateForce();
                 }
             });
             mUserEdit.get(i).setText("0");
@@ -409,7 +409,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                                 control.PoundToKilo(Integer.parseInt(
                                         mUserEdit.get(i).getText().toString())), MAX_STAT[i % 2]));
                     }
-                    setForce();
+                    CalculateForce();
                 }
             });
         }
@@ -461,12 +461,12 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         joint.setAngle(progress + joint.getMinAngle());
         mCountTexts.get(position).setText(Integer.toString(joint.getAngle()));
         if(joint.getAngle() < 0)
-            applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+            applyRotation(joint.getId(), joint.getRotationMatrix(), joint.getAngle()
                     - joint.getPrevAngle(), joint.getNegativePoseDirection());
         else
-            applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+            applyRotation(joint.getId(), joint.getRotationMatrix(), joint.getAngle()
                     - joint.getPrevAngle(), joint.getPositivePoseDirection());
-        setForce();
+        CalculateForce();
     }
 
     @Override
@@ -542,7 +542,16 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
             } else {
                 mSkeleton = new Skeleton();
             }
-            applyAllRotations();
+            //applyAllRotations();
+            skeleton.get(0).getSkeletonPose().updateTransforms();
+            skeleton.applySkeletonPose();
+            skeleton.applyAnimation();
+            int temp = CURRENT_JOINT;
+            for (CURRENT_JOINT = 0; CURRENT_JOINT < 4; CURRENT_JOINT++) {
+                ShowAllSlider();
+                updateSkeletonControls();
+            }
+            CURRENT_JOINT = temp;
             updateSkeletonControls();
             updateUserControls();
         }
@@ -559,7 +568,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private void applyAllRotations(){
         for (ArrayList<JointAngle> aj : mSkeleton.getJoints().values()){
             for (JointAngle joint : aj){
-                applyRotation(joint.getId(), joint.getRotation(), joint.getAngle()
+                applyRotation(joint.getId(), joint.getRotationMatrix(), joint.getAngle()
                         - joint.getPrevAngle(), joint.getNegativePoseDirection());
             }
         }
@@ -591,6 +600,9 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         }
     }
 
+    /**
+     * Updates the skeleton controls setting and hiding/showing the appropriate sliders
+     */
     private void updateSkeletonControls() {
         mCurrentJoint = mSkeleton.getJoints().get(CURRENT_JOINT);
         for(int i = 0; i < NUM_JOINTS; i++){
@@ -614,6 +626,9 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         }
     }
 
+    /**
+     * Adds the skeleton into the GLView
+     */
     private void addSkeleton() {
         try {
             Resources res = getResources();
@@ -693,7 +708,11 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         pose.getLocal(jointIndex).setTo(subGlobal);
     }
 
-    private void setForce(){
+    /**
+     * Given the current configuration calculates and presents the force being applied onto lower
+     * back.
+     */
+    private void CalculateForce() {
         FORCE = mSkeleton.calculateForce(skeleton);
         if (FORCE < 3400){
             mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_green_dark));

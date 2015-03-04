@@ -37,7 +37,7 @@ public class SavedSkeletonActivity extends Activity {
      * to display
      */
     @Override
-    public void onCreate (Bundle savedInstanceState){
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mContext = this;
         setContentView(R.layout.activity_load_skeleton);
@@ -45,6 +45,11 @@ public class SavedSkeletonActivity extends Activity {
         mSkeletons = SkeletonController.get(this).getSkeletons();
         mAdapter = new SkeletonAdapter(mSkeletons);
         mSkeletonList.setAdapter(mAdapter);
+
+        /*
+         * When a skeleton is selected the id of selected
+         * is put into an extra and sent back to the main fragment
+         */
         mSkeletonList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -57,30 +62,34 @@ public class SavedSkeletonActivity extends Activity {
             }
         });
 
+        /*
+         * Handles the swipe mechanic for deleting
+         */
         SwipeDismissListViewTouchListener touchListener =
-            new SwipeDismissListViewTouchListener(mSkeletonList,
-            new SwipeDismissListViewTouchListener.DismissCallbacks() {
+                new SwipeDismissListViewTouchListener(mSkeletonList,
+                        new SwipeDismissListViewTouchListener.DismissCallbacks() {
 
-            @Override
-            public boolean canDismiss(int position) {
-                return true;
-            }
+                            @Override
+                            public boolean canDismiss(int position) {
+                                return true;
+                            }
 
-            @Override
-            public void onDismiss(ListView listView, int[] reverseSortedPositions) {
-                for (int position : reverseSortedPositions) {
-                    mSkeletons.remove(position);
-                }
-                for(Skeleton s : mSkeletons){
-                    Log.d("Current List", s.getTitle());
-                }
-                mAdapter.notifyDataSetChanged();
-                SkeletonController.get(mContext).saveAllSkeletons();
-                Toast.makeText(mContext, "Deleted!", Toast.LENGTH_SHORT).show();
-            }
-        });
+                            @Override
+                            public void onDismiss(ListView listView, int[] reverseSortedPositions) {
+                                for (int position : reverseSortedPositions) {
+                                    mSkeletons.remove(position);
+                                }
+                                for (Skeleton s : mSkeletons) {
+                                    Log.d("Current List", s.getTitle());
+                                }
+                                mAdapter.notifyDataSetChanged();
+                                SkeletonController.get(mContext).saveAllSkeletons();
+                                Toast.makeText(mContext, "Deleted!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
 
         mSkeletonList.setOnTouchListener(touchListener);
+        //On Scroll listener required, so that scroll is not mistaken for swipe
         mSkeletonList.setOnScrollListener(touchListener.makeScrollListener());
     }
 
@@ -89,6 +98,9 @@ public class SavedSkeletonActivity extends Activity {
             super(mContext, 0, skeletons);
         }
 
+        /*
+         * Creates the individual rows for saved skeletons
+         */
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             if (convertView == null) {
@@ -96,17 +108,15 @@ public class SavedSkeletonActivity extends Activity {
                         .inflate(R.layout.activity_load_skeleton_list_item, null);
             }
             Skeleton skeleton = getItem(position);
-
             TextView skeletonName =
                     (TextView) convertView.findViewById(R.id.skeleton_list_item_name);
             skeletonName.setText(skeleton.getTitle());
 
             TextView skeletonDescription =
                     (TextView) convertView.findViewById(R.id.skeleton_list_item_description);
-            if(skeleton.getDescription().length() < 40){
+            if (skeleton.getDescription().length() < 40) {
                 skeletonDescription.setText(skeleton.getDescription());
-            }
-            else {
+            } else {
                 skeletonDescription.setText(skeleton.getDescription().substring(0, 40) + "...");
             }
             TextView timeStamp = (TextView) convertView.findViewById(R.id.skeleton_list_item_timestamp);

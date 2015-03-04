@@ -249,7 +249,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_below="@id/user_weight_text"
-                android:ems="2"
+                android:ems="3"
                 android:inputType="number"
                 android:maxLength="3" />
 
@@ -277,7 +277,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_below="@id/user_height_text"
-                android:ems="2"
+                android:ems="3"
                 android:inputType="number"
                 android:maxLength="3" />
 
@@ -303,7 +303,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentRight="true"
                 android:layout_below="@id/box_weight_text"
-                android:ems="2"
+                android:ems="3"
                 android:inputType="number"
                 android:maxLength="3" />
 

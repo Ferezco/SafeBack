@@ -5,13 +5,18 @@ import android.util.Log;
 
 import com.tri.felipe.safeback.Model.Skeleton;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.InputStream;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Scanner;
 import java.util.UUID;
 
 /**
@@ -19,7 +24,7 @@ import java.util.UUID;
  */
 public class SkeletonController {
     private static SkeletonController sSkeletonController;
-    private static String SAVEFILE = "skeleton_records.txt";
+    private static String SAVEFILE = "skeleton_records.ser";
     private ArrayList<Skeleton> mSkeletons;
     private Context appContext;
 
@@ -60,32 +65,22 @@ public class SkeletonController {
      * to them all of the current saved Skeletons
      */
     public void saveAllSkeletons() {
-        FileOutputStream skeleton_records;
         appContext.deleteFile(SAVEFILE);
         try {
-            skeleton_records = appContext.openFileOutput(SAVEFILE, appContext.MODE_PRIVATE);
-        OutputStreamWriter skeletons = new OutputStreamWriter(skeleton_records);
+            FileOutputStream skeleton_records = appContext.openFileOutput(SAVEFILE, appContext.MODE_PRIVATE);
+            OutputStream buffer = new BufferedOutputStream(skeleton_records);
+            ObjectOutput output = new ObjectOutputStream(buffer);
 
-        for (Skeleton s: mSkeletons){
-            //Format neck*3, Shoulder *4, Trunk *3, Elbow * 2, Title, Description, Time
-            String data = String.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%s,%s,%d\n",
-                    s.getJoints().get(0).get(0).getAngle(),
-                    s.getJoints().get(0).get(1).getAngle(),
-                    s.getJoints().get(0).get(2).getAngle(),
-                    s.getJoints().get(1).get(0).getAngle(),
-                    s.getJoints().get(1).get(1).getAngle(),
-                    s.getJoints().get(1).get(2).getAngle(),
-                    s.getJoints().get(1).get(3).getAngle(),
-                    s.getJoints().get(2).get(0).getAngle(),
-                    s.getJoints().get(2).get(1).getAngle(),
-                    s.getJoints().get(2).get(2).getAngle(),
-                    s.getJoints().get(3).get(0).getAngle(),
-                    s.getJoints().get(3).get(1).getAngle(), s.getWeight(), s.getHeight(),
-                    s.getBoxWeight(), s.getTitle(), s.getDescription(), s.getDate().getTime() );
-            Log.d("SkeletonController", data);
-            skeletons.write(data);
-        }
-            skeletons.close();
+            int count = 0;
+            for (Skeleton s : mSkeletons) {
+                output.writeObject(s);
+                count++;
+            }
+
+            output.close();
+            buffer.close();
+            skeleton_records.close();
+            Log.d("Writing to File", Integer.toString(count));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -110,33 +105,20 @@ public class SkeletonController {
     }
 
     public void loadAllSkeletons() throws IOException{
-        String[] reader;
-        Scanner scanner;
         try {
-            scanner = new Scanner(appContext.openFileInput(SAVEFILE));
-            Log.d("SkeletonController", "completed reading from dynamic");
-            while (scanner.hasNextLine()){
-                String r = scanner.nextLine();
-                reader = r.split(",");
-                Log.d("dynamic", r);
-                createSkeleton(reader);
+            InputStream skeleton_records = appContext.openFileInput(SAVEFILE);
+            InputStream buffer = new BufferedInputStream(skeleton_records);
+            ObjectInput input = new ObjectInputStream(buffer);
+
+
+            for (; ; ) {
+                mSkeletons.add((Skeleton) input.readObject());
             }
-            scanner.close();
         } catch (FileNotFoundException e) {
             Log.d("Exception", "FileNotFound");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         }
-    }
-
-    private void createSkeleton(String[] l) {
-        int[] values = new int[15];
-        for (int i = 0; i < 15; i++ ){
-            values[i] = Integer.parseInt(l[i]);
-        }
-        Skeleton s = new Skeleton(values[0], values[1], values[2], values[3], values[4], values[5],
-                values[6], values[7], values[8], values[9], values[10], values[11], values[12],
-                values[13], values[14], l[15], l[16], new Date(Long.parseLong(l[17])));
-        logSkeletonStatus("Create Skeleton", s);
-        mSkeletons.add(s);
     }
 
     public Skeleton getSkeletonByID(UUID id){
