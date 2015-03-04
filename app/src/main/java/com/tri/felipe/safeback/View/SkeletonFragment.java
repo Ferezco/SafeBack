@@ -114,11 +114,11 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     private ArrayList<Skeleton> mSkeletons;
     private String[] LABELS = {"Neck", "Shoulder", "Trunk", "Elbow"};
     private String[][] TRAITS = {
-                    {"Neck Axial Twist", "Neck Lateral Bending", "Neck Extension"},
-                    {"L Shoulder Abduction", "R Shoulder Abduction",
+            {"Neck Axial Twist", "Neck Lateral Bending", "Neck Extension"},
+            {"L Shoulder Abduction", "R Shoulder Abduction",
                     "L Shoulder  Extension", "R Shoulder Extenson"},
-                    {"Trunk Rotation", "Trunk Lateral Bending", "Trunk Extension"},
-                    {"L Elbow Extension", "R Elbow Extension"}};
+            {"Trunk Rotation", "Trunk Lateral Bending", "Trunk Extension"},
+            {"L Elbow Extension", "R Elbow Extension"}};
     private String[] USER_TRAITS = {"User Weight: ", "User Height: ", "Item Weight: "};
     private String[][] UNITS = {{"lbs", "kg"}, {"Inches", "cm"}, {"lbs", "kg"}};
 
@@ -148,7 +148,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
             @Override
             public EGLConfig chooseConfig(EGL10 egl, EGLDisplay display) {
                 // Ensure that we get a 16bit framebuffer.
-                int[] attributes = new int[] { EGL10.EGL_DEPTH_SIZE, 16, EGL10.EGL_NONE };
+                int[] attributes = new int[]{EGL10.EGL_DEPTH_SIZE, 16, EGL10.EGL_NONE};
                 EGLConfig[] configs = new EGLConfig[1];
                 int[] result = new int[1];
                 egl.eglChooseConfig(display, attributes, configs, 1, result);
@@ -191,7 +191,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
 
         float[] boundingBox = mRenderer.calcBoundingBox();
         float height = (boundingBox[3]); // ninja height
-        new Light(world).setPosition(new SimpleVector(0, -height/2, height));
+        new Light(world).setPosition(new SimpleVector(0, -height / 2, height));
 
         cameraController = new CameraOrbitController(world.getCamera());
         cameraController.cameraAngle = 0;
@@ -276,7 +276,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 Animator anim;
                 int buttonTrans = -mUserPanel.getHeight() + mBottomText.getHeight();
 
-                if (USER_EXPANDED){
+                if (USER_EXPANDED) {
                     if (Build.VERSION.SDK_INT >= 21) {
                         int cx = (mUserPanel.getLeft() + mUserPanel.getRight()) / 2;
                         int cy = (mUserPanel.getTop() + mUserPanel.getBottom()) / 2;
@@ -291,24 +291,23 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                             }
                         });
                         anim.start();
-                    }
-                    else {
+                    } else {
                         mUserPanel.animate()
-                            .alpha(0f)
-                            .setDuration(mShortAnimationDuration)
-                            .setListener(new AnimatorListenerAdapter() {
-                                @Override
-                                public void onAnimationEnd(Animator animation) {
-                                    mUserPanel.setVisibility(View.INVISIBLE);
-                                }
-                            });
+                                .alpha(0f)
+                                .setDuration(mShortAnimationDuration)
+                                .setListener(new AnimatorListenerAdapter() {
+                                    @Override
+                                    public void onAnimationEnd(Animator animation) {
+                                        mUserPanel.setVisibility(View.INVISIBLE);
+                                    }
+                                });
                     }
                     mExpandButton.animate()
                             .translationYBy(-buttonTrans)
                             .rotation(90)
                             .setDuration(mShortAnimationDuration);
                     USER_EXPANDED = false;
-                }else{
+                } else {
                     if (Build.VERSION.SDK_INT >= 21) {
                         int cx = (mUserPanel.getLeft() + mUserPanel.getRight()) / 2;
                         int cy = (mUserPanel.getTop() + mUserPanel.getBottom()) / 2;
@@ -317,8 +316,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                         anim = ViewAnimationUtils.createCircularReveal(mUserPanel, cx, cy, 0, finalRadius);
                         mUserPanel.setVisibility(View.VISIBLE);
                         anim.start();
-                    }
-                    else {
+                    } else {
                         mUserPanel.setAlpha(0f);
                         mUserPanel.setVisibility(View.VISIBLE);
 
@@ -355,8 +353,8 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         mUserEdit.add((EditText) rootView.findViewById(R.id.user_height_EditText));
         mUserEdit.add((EditText) rootView.findViewById(R.id.box_weight_EditText));
 
-        for (int i = 0; i < 3; i++){
-            mUserText.get(i).setText(USER_TRAITS[i] + UNITS[i][METRIC? 1 : 0]);
+        for (int i = 0; i < 3; i++) {
+            mUserText.get(i).setText(USER_TRAITS[i] + UNITS[i][METRIC ? 1 : 0]);
             mUserSeek.get(i).setMax(MAX_STAT[i % 2]);
             mUserSeek.get(i).setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                 @Override
@@ -394,13 +392,12 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 public void onFocusChange(View v, boolean hasFocus) {
                     int i = 0;
                     while (!v.equals(mUserEdit.get(i)))
-                            i++;
+                        i++;
                     if (METRIC) {
                         mUserSeek.get(i).setProgress(Math.min((Integer.parseInt(
                                 mUserEdit.get(i).getText().toString())), MAX_STAT[i % 2]));
-                    }
-                    else{
-                        if (i % 2 ==1){
+                    } else {
+                        if (i % 2 == 1) {
                             mUserSeek.get(i).setProgress(Math.min(
                                     control.InchToCm(Integer.parseInt(
                                             mUserEdit.get(i).getText().toString())), MAX_STAT[i % 2]));
@@ -434,7 +431,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         mCountTexts.add((TextView) rootView.findViewById(R.id.skeleton_trait3_value));
         mCountTexts.add((TextView) rootView.findViewById(R.id.skeleton_trait4_value));
 
-        for (int i = 0; i < 4; i++){
+        for (int i = 0; i < 4; i++) {
             SeekBar s = mSeekBars.get(i);
             s.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
                 @Override
@@ -446,12 +443,14 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 }
 
                 @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {}
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
 
                 @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {}
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                }
             });
-            }
+        }
         updateSkeletonControls();
     }
 
@@ -460,7 +459,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         joint.updatePrevAngle();
         joint.setAngle(progress + joint.getMinAngle());
         mCountTexts.get(position).setText(Integer.toString(joint.getAngle()));
-        if(joint.getAngle() < 0)
+        if (joint.getAngle() < 0)
             applyRotation(joint.getId(), joint.getRotationMatrix(), joint.getAngle()
                     - joint.getPrevAngle(), joint.getNegativePoseDirection());
         else
@@ -486,24 +485,23 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 mSkeletonDescription = (EditText) view1.findViewById(R.id.skeleton_description_editText);
                 SkeletonDialog = new AlertDialog.Builder(getActivity())
                         .setTitle("Save Skeleton Configuration").setView(view1).
-                        setPositiveButton("Save", new DialogInterface.OnClickListener() {
+                                setPositiveButton("Save", new DialogInterface.OnClickListener() {
 
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                if (!mSkeletonName.getText().toString().isEmpty() &&
-                                        !mSkeletonDescription.getText().toString().isEmpty()) {
-                                    Skeleton s = mSkeleton.copy();
-                                    s.setTitle(mSkeletonName.getText().toString());
-                                    s.setDescription(mSkeletonDescription.getText().toString());
-                                    s.setDate(new Date());
-                                    mSkeletons.add(s);
-                                    control.get(getActivity()).saveAllSkeletons();
-                                    Toast.makeText(getActivity(), "Saved!", Toast.LENGTH_SHORT).show();
-                                }
-                                else
-                                    Toast.makeText(getActivity(), "Missing title or description", Toast.LENGTH_SHORT).show();
-                            }
-                        }).setNegativeButton("Cancel", null);
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        if (!mSkeletonName.getText().toString().isEmpty() &&
+                                                !mSkeletonDescription.getText().toString().isEmpty()) {
+                                            Skeleton s = mSkeleton.copy();
+                                            s.setTitle(mSkeletonName.getText().toString());
+                                            s.setDescription(mSkeletonDescription.getText().toString());
+                                            s.setDate(new Date());
+                                            mSkeletons.add(s);
+                                            control.get(getActivity()).saveAllSkeletons();
+                                            Toast.makeText(getActivity(), "Saved!", Toast.LENGTH_SHORT).show();
+                                        } else
+                                            Toast.makeText(getActivity(), "Missing title or description", Toast.LENGTH_SHORT).show();
+                                    }
+                                }).setNegativeButton("Cancel", null);
 
                 AlertDialog saveDialog = SkeletonDialog.show();
                 if (Build.VERSION.SDK_INT < 21) {
@@ -533,7 +531,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_SKELETON_REQUEST){
+        if (requestCode == PICK_SKELETON_REQUEST) {
             if (resultCode == Activity.RESULT_OK) {
                 UUID id = (UUID) data.getSerializableExtra(LOAD);
                 mSkeleton = control.getSkeletonByID(id).copy();
@@ -557,7 +555,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         }
     }
 
-    private boolean getUnitType(){
+    private boolean getUnitType() {
         SharedPreferences sharedPrefs = PreferenceManager
                 .getDefaultSharedPreferences(getActivity());
         Log.d("Prerence", sharedPrefs.getString(KEY_PREF_UNIT_TYPE, "NULL"));
@@ -565,16 +563,16 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
     }
 
 
-    private void applyAllRotations(){
-        for (ArrayList<JointAngle> aj : mSkeleton.getJoints().values()){
-            for (JointAngle joint : aj){
+    private void applyAllRotations() {
+        for (ArrayList<JointAngle> aj : mSkeleton.getJoints().values()) {
+            for (JointAngle joint : aj) {
                 applyRotation(joint.getId(), joint.getRotationMatrix(), joint.getAngle()
                         - joint.getPrevAngle(), joint.getNegativePoseDirection());
             }
         }
     }
 
-    private void ShowAllSlider(){
+    private void ShowAllSlider() {
         for (int i = 2; i < NUM_JOINTS; i++) {
             mTraitTexts.get(i).setVisibility(View.VISIBLE);
             mSeekBars.get(i).setVisibility(View.VISIBLE);
@@ -582,20 +580,19 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         }
     }
 
-    private void updateUserControls(){
-        for (int i = 0; i < 3; i++){
+    private void updateUserControls() {
+        for (int i = 0; i < 3; i++) {
             mUserText.get(i).setText(USER_TRAITS[i] + UNITS[i][METRIC ? 1 : 0]);
             mUserSeek.get(i).setProgress(mSkeleton.getUserStat(i));
             if (METRIC) {
                 mUserEdit.get(i).setText(Integer.toString((mSkeleton.getUserStat(i))));
-            }
-            else{
-                if (i % 2  == 1)
+            } else {
+                if (i % 2 == 1)
                     mUserEdit.get(i).setText(Integer.toString(control.
                             CmToInch(mSkeleton.getUserStat(i))));
                 else
                     mUserEdit.get(i).setText(Integer.toString(control.
-                        KiloToPound(mSkeleton.getUserStat(i))));
+                            KiloToPound(mSkeleton.getUserStat(i))));
             }
         }
     }
@@ -605,7 +602,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
      */
     private void updateSkeletonControls() {
         mCurrentJoint = mSkeleton.getJoints().get(CURRENT_JOINT);
-        for(int i = 0; i < NUM_JOINTS; i++){
+        for (int i = 0; i < NUM_JOINTS; i++) {
             if ((CURRENT_JOINT == 1) || ((CURRENT_JOINT == 0 || CURRENT_JOINT == 2) && i < 3)
                     || (CURRENT_JOINT == 3 && i < 2)) {
                 //Log.d("Testing", Integer.toString(i));
@@ -617,8 +614,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
                 mSeekBars.get(i).setMax(mCurrentJoint.get(i).getMidAngle());
                 mCountTexts.get(i).setText(Integer.toString(mCurrentJoint.get(i).getAngle()));
                 //logSkeletonStatus();
-            }
-            else {
+            } else {
                 mTraitTexts.get(i).setVisibility(View.INVISIBLE);
                 mSeekBars.get(i).setVisibility(View.INVISIBLE);
                 mCountTexts.get(i).setVisibility(View.INVISIBLE);
@@ -648,7 +644,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         skeleton.getRoot().clearTranslation();
         skeleton.getRoot().translate(0f, 0.95f, 18f);
         skeleton.getRoot().rotateAxis(new SimpleVector(0, 0, 1), (float) Math.PI);
-        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) -Math.PI/2);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) -Math.PI / 2);
         skeleton.getRoot().translate(0, 0, 0);
     }
 
@@ -657,7 +653,7 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
         skeleton.getRoot().clearTranslation();
         skeleton.getRoot().translate(0f, 0.95f, 18f);
         skeleton.getRoot().rotateAxis(new SimpleVector(0, 0, 1), (float) Math.PI);
-        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) Math.PI/2);
+        skeleton.getRoot().rotateAxis(new SimpleVector(0, 1, 0), (float) Math.PI / 2);
         skeleton.getRoot().translate(0, 0, 0);
     }
 
@@ -714,11 +710,10 @@ public class SkeletonFragment extends Fragment {//implements SharedPreferences.O
      */
     private void CalculateForce() {
         FORCE = mSkeleton.calculateForce(skeleton);
-        if (FORCE < 3400){
+        if (FORCE < 3400) {
             mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
             mTotalForce.setText("Load is Safe");
-        }
-        else{
+        } else {
             mTotalForce.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
             mTotalForce.setText("Load is Unsafe");
         }
