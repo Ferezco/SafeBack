@@ -40,19 +40,19 @@ public class SkeletonController {
         return sSkeletonController;
     }
 
-    public ArrayList<Skeleton> getSkeletons(){
+    public ArrayList<Skeleton> getSkeletons() {
         return mSkeletons;
     }
 
-    public int CmToInch(int value){
+    public int CmToInch(int value) {
         return Math.round(value * 0.393701f);
     }
 
-    public int InchToCm(int value){
+    public int InchToCm(int value) {
         return Math.round(value * 2.54f);
     }
 
-    public int KiloToPound(int value){
+    public int KiloToPound(int value) {
         return Math.round(value * 2.20462f);
     }
 
@@ -104,12 +104,11 @@ public class SkeletonController {
                 mSkeleton.getBoxWeight()));
     }
 
-    public void loadAllSkeletons() throws IOException{
+    public void loadAllSkeletons() throws IOException {
         try {
             InputStream skeleton_records = appContext.openFileInput(SAVEFILE);
             InputStream buffer = new BufferedInputStream(skeleton_records);
             ObjectInput input = new ObjectInputStream(buffer);
-
 
             for (; ; ) {
                 mSkeletons.add((Skeleton) input.readObject());
@@ -121,8 +120,8 @@ public class SkeletonController {
         }
     }
 
-    public Skeleton getSkeletonByID(UUID id){
-        for(Skeleton s : mSkeletons){
+    public Skeleton getSkeletonByID(UUID id) {
+        for (Skeleton s : mSkeletons) {
             if (s.getId().equals(id)) {
                 return s;
             }
